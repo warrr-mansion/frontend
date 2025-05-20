@@ -1,47 +1,37 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <AppHeader />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+  <div id="map" style="width: 100%; height: 400px; margin: 20px 0"></div>
 
-  <main>
-    <TheWelcome />
-  </main>
+  <ExtraLibraryTestVue />
+  <AppFooter />
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+<script setup>
+import { onMounted, getCurrentInstance } from 'vue'
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+import ExtraLibraryTestVue from '@/views/extra/ExtraLibraryTestVue.vue'
+import AppFooter from '@/components/common/AppFooter.vue'
+import MemberRegistForm from './views/member/MemberRegistForm.vue'
+import MemberDetail from './views/member/MemberDetail.vue'
+import MemberList from './views/member/MemberList.vue'
+import MemberModifyForm from './views/member/MemberModifyForm.vue'
+import CommonError from './views/error/CommonError.vue'
+import AppHeader from '@/components/common/AppHeader.vue'
+import LoginForm from './views/member/LoginForm.vue'
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+const { proxy } = getCurrentInstance()
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+onMounted(() => {
+  proxy.$loadKakaoMapSDK().then((kakao) => {
+    const container = document.getElementById('map')
+    const options = {
+      center: new kakao.maps.LatLng(37.5665, 126.978), // 서울 중심 좌표
+      level: 3,
+    }
+    new kakao.maps.Map(container, options)
+  })
+})
+</script>
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+<style scoped></style>
