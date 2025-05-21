@@ -1,5 +1,6 @@
 import { createApp, ref } from 'vue'
 import App from './App.vue'
+import router from './router'
 
 // TODO: 01. bootstrap관련 css와 js를 로딩하세요.
 import 'bootstrap/dist/css/bootstrap.min.css'

@@ -39,20 +39,24 @@
 }
 
 .footer-container {
+  max-width: 1850px;
   display: flex;
   align-items: flex-start;
   padding: 10px 0;
+  justify-content: flex-start; /* 왼쪽 정렬로 변경 */
+  margin-left: 30px; /* 왼쪽으로 치우침 */
 }
 
 .footer-left {
-  flex: 1;
+  flex: 0 0 auto; /* flex-grow를 0으로 변경하여 내용물 크기만큼만 차지하도록 함 */
+  margin-right: 20px; /* 오른쪽 마진 추가 */
 }
 
 .footer-divider {
   width: 1px;
-  height: 100px; /* 고정 높이로 설정하여 수직선 보이도록 */
+  height: 100px;
   background-color: #ccc;
-  margin: 5px 5px;
+  margin: 5px 20px 5px 0; /* 오른쪽 마진만 남김 */
 }
 
 .footer-right {

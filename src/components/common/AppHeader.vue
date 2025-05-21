@@ -1,6 +1,6 @@
 <template>
   <div class="header-wrapper">
-    <div class="container d-flex justify-content-between align-items-center py-3">
+    <div class="wide-container d-flex justify-content-between align-items-center py-3">
       <!-- 왼쪽: 제목 -->
       <h1 class="logo">ZipFlex</h1>
 
@@ -21,7 +21,6 @@
         </template>
       </nav>
     </div>
-    <hr />
   </div>
 </template>
 
@@ -38,6 +37,13 @@ const logout = () => {
 <style scoped>
 .header-wrapper {
   background-color: white;
+  width: 100%;
+}
+
+.wide-container {
+  width: 100%; /* 더 넓은 컨테이너 */
+  max-width: 1850px; /* 최대 너비 설정 */
+  margin: 0 auto;
 }
 
 .logo {
@@ -49,14 +55,17 @@ const logout = () => {
 
 .menu-group {
   display: flex;
-  gap: 24px;
+  gap: 20px; /* 메뉴 간격 늘림 */
+  padding-left: 200px; /* 메뉴들을 더 오른쪽으로 */
 }
 
 .menu {
-  text-decoration: none; /* 밑줄 제거 */
-  color: #222; /* 링크 색상 */
+  text-decoration: none;
+  color: #222;
   font-weight: 600;
   font-size: 16px;
+  padding: 5px 8px; /* 클릭 영역 확대 */
+  transition: color 0.2s ease-in-out; /* 부드러운 색상 전환 효과 */
 }
 
 .menu:hover {
