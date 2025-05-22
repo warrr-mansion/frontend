@@ -1,23 +1,23 @@
 <template>
   <div class="header-wrapper">
-    <div class="wide-container d-flex justify-content-between align-items-center py-3">
-      <!-- 왼쪽: 제목 -->
-      <h1 class="logo">ZipFlex</h1>
+    <div class="wide-container d-flex justify-between align-items-center py-3">
+      <!-- 왼쪽: 로고 클릭 시 홈으로 이동 -->
+      <router-link to="/" class="logo">ZipFlex</router-link>
 
       <!-- 오른쪽: 메뉴 -->
       <nav class="menu-group">
-        <a href="#" class="menu">공지사항</a>
-        <a href="#" class="menu">매물 조회</a>
-        <a href="#" class="menu">부동산 뉴스</a>
+        <router-link to="/notice" class="menu">공지사항</router-link>
+        <router-link to="/map" class="menu">매물 조회</router-link>
+        <router-link to="/news" class="menu">부동산 뉴스</router-link>
 
         <template v-if="!globalStatus.isLoggedIn">
-          <a href="#" class="menu">로그인</a>
-          <a href="#" class="menu">회원가입</a>
+          <router-link to="/login" class="menu">로그인</router-link>
+          <router-link to="/signup" class="menu">회원가입</router-link>
         </template>
 
         <template v-else>
           <a href="#" class="menu" @click.prevent="logout">로그아웃</a>
-          <a href="#" class="menu">마이페이지</a>
+          <router-link to="/myPage" class="menu">마이페이지</router-link>
         </template>
       </nav>
     </div>
@@ -26,11 +26,12 @@
 
 <script setup>
 import { inject } from 'vue'
+
 const globalStatus = inject('globalStatus')
 
 const logout = () => {
-  globalStatus.value.isLoggedIn = false
-  globalStatus.value.loginUser = {}
+  globalStatus.isLoggedIn = false
+  globalStatus.loginUser = {}
 }
 </script>
 
@@ -38,6 +39,7 @@ const logout = () => {
 .header-wrapper {
   background-color: white;
   width: 100%;
+  height: 80px; /* 👈 고정 높이 설정 */
 }
 
 .wide-container {
@@ -48,9 +50,10 @@ const logout = () => {
 
 .logo {
   margin: 0;
-  font-weight: 800;
+  font-weight: 1000;
   font-size: 28px;
-  color: #333;
+  color: #000; /* ✅ 검정색 */
+  text-decoration: none; /* ✅ 밑줄 제거 */
 }
 
 .menu-group {
