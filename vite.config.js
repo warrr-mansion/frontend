@@ -19,4 +19,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // .env 파일로 옮기기
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:26280',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
+      },
+    },
+  },
 })

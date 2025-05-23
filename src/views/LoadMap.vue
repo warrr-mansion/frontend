@@ -1,11 +1,11 @@
 <template>
   <div class="full-page-content">
-    <ExtraLibraryTestVue />
+    <KaKaoMap />
   </div>
 </template>
 
 <script setup>
-import ExtraLibraryTestVue from '@/views/extra/KaKaoMap.vue'
+import KaKaoMap from '@/views/extra/KaKaoMap.vue'
 </script>
 
 <style>

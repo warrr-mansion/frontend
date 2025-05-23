@@ -16,7 +16,7 @@
         </template>
 
         <template v-else>
-          <a href="#" class="menu" @click.prevent="logout">로그아웃</a>
+          <a href="/" class="menu" @click.prevent="logout">로그아웃</a>
           <router-link to="/myPage" class="menu">마이페이지</router-link>
         </template>
       </nav>

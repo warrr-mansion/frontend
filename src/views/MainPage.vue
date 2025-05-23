@@ -125,10 +125,20 @@
             <div class="bg-gray-50 p-5 rounded-lg shadow-sm flex flex-col items-center">
               <div class="bg-gray-300 h-20 w-16 mb-3 rounded"></div>
               <router-link
-                to="/"
+                v-if="!globalStatus.isLoggedIn"
+                to="/login"
                 class="whitespace-nowrap text-center no-underline text-gray-800 font-semibold"
-                >찜목록</router-link
               >
+                찜목록
+              </router-link>
+
+              <router-link
+                v-else
+                to="/myPage"
+                class="whitespace-nowrap text-center no-underline text-gray-800 font-semibold"
+              >
+                찜목록
+              </router-link>
             </div>
             <div class="bg-gray-50 p-5 rounded-lg shadow-sm flex flex-col items-center">
               <div class="bg-gray-300 h-20 w-16 mb-3 rounded"></div>

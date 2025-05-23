@@ -5,7 +5,7 @@ import NoticeListView from '../views/NoticePage.vue'
 import NoticeDetailView from '../views/NoticeDetailView.vue'
 import RealEstateNewsView from '@/views/RealEstateNewsView.vue'
 import LoginView from '@/components/Login/LoginView.vue'
-import SignUpView from '@/components/common/SignUp/SignUpView.vue'
+import SignUpView from '@/components/SignUp/SignUpView.vue'
 import MemberDetail from '@/views/member/MemberDetail.vue'
 import MyPageView from '@/components/member/MyPageView.vue'
 
