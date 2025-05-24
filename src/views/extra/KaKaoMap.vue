@@ -1,103 +1,256 @@
 <template>
-  <div class="map-container">
+  <div :style="{ display: 'flex', height: '100vh', position: 'relative' }">
     <!-- 지역 선택 바 -->
-    <div class="region-select-container">
-      <select v-model="buildingType" class="region-select">
+    <div
+      :style="{
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        background: 'white',
+        padding: '12px 16px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '12px',
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.08)',
+        zIndex: 10,
+      }"
+    >
+      <select v-model="buildingType" :style="selectStyle">
         <option disabled value="">건물 유형 선택</option>
         <option value="APARTMENT">아파트</option>
         <option value="VILLA">빌라</option>
         <option value="OFFICETEL">오피스텔</option>
       </select>
 
-      <select v-model="sido" class="region-select">
+      <select v-model="sido" :style="selectStyle">
         <option disabled value="">시도 선택</option>
         <option v-for="item in sidoList" :key="item.code" :value="item.code">
           {{ item.name }}
         </option>
       </select>
 
-      <select v-model="gugun" class="region-select" :disabled="!sido">
+      <select v-model="gugun" :disabled="!sido" :style="selectStyle">
         <option disabled value="">구군 선택</option>
         <option v-for="item in gugunList" :key="item.code" :value="item.code">
           {{ item.name }}
         </option>
       </select>
 
-      <select v-model="dong" class="region-select" :disabled="!gugun">
+      <select v-model="dong" :disabled="!gugun" :style="selectStyle">
         <option disabled value="">읍면동 선택</option>
         <option v-for="item in dongList" :key="item.code" :value="item.code">
           {{ item.name }}
         </option>
       </select>
 
-      <button @click="fetchProperties" :disabled="!buildingType" class="search-button">조회</button>
+      <button @click="fetchProperties" :disabled="!buildingType" :style="buttonStyle">조회</button>
 
-      <div v-if="loading" class="spinner"></div>
+      <div
+        v-if="loading"
+        :style="{
+          border: '4px solid #e5e7eb',
+          borderTop: '4px solid #3b82f6',
+          borderRadius: '50%',
+          width: '24px',
+          height: '24px',
+          animation: 'spin 0.7s linear infinite',
+        }"
+      ></div>
     </div>
 
     <!-- 매물 목록 -->
-    <div class="property-sidebar">
-      <div class="property-list">
-        <div v-if="(!propertyList || propertyList.length === 0) && !loading" class="no-result">
+    <div
+      :style="{
+        width: '360px',
+        background: '#f8fafc',
+        padding: '20px',
+        borderLeft: '1px solid #e5e7eb',
+        overflowY: 'auto',
+        height: 'calc(100vh - 70px)',
+        marginTop: '70px',
+        display: 'flex',
+        flexDirection: 'column',
+      }"
+    >
+      <div :style="{ flexGrow: 1, overflowY: 'auto' }">
+        <div
+          v-if="(!propertyList || propertyList.length === 0) && !loading"
+          :style="{ textAlign: 'center', color: '#6b7280', marginTop: '20px' }"
+        >
           조회된 매물이 없습니다.
         </div>
+
         <div
-          class="property-item"
           v-for="item in propertyList || []"
           :key="item.id"
-          :class="{ selected: selectedPropertyId === item.id }"
           @click="selectProperty(item)"
+          :style="{
+            background: selectedPropertyId === item.id ? '#eef2ff' : 'white',
+            border: `1px solid ${selectedPropertyId === item.id ? '#3b82f6' : '#e5e7eb'}`,
+            borderRadius: '8px',
+            padding: '14px',
+            marginBottom: '16px',
+            fontSize: '14px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }"
         >
-          <p class="building-icon">
+          <p :style="{ fontSize: '16px', marginBottom: '4px' }">
             {{ getBuildingEmoji(lastFetchedBuildingType) }} <strong>{{ item.buildingName }}</strong>
           </p>
           <p>{{ item.emdName }} · {{ item.roadName }}</p>
         </div>
       </div>
-      <div class="pagination">
-        <button @click="prevPage" :disabled="pageNo === 1">이전</button>
+
+      <div
+        :style="{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: 'auto',
+          paddingTop: '12px',
+          borderTop: '1px solid #e5e7eb',
+        }"
+      >
+        <button @click="prevPage" :disabled="pageNo === 1" :style="paginationButtonStyle">
+          이전
+        </button>
         <span>페이지 {{ pageNo }}</span>
-        <button @click="nextPage" :disabled="!hasNext">다음</button>
+        <button @click="nextPage" :disabled="!hasNext" :style="paginationButtonStyle">다음</button>
       </div>
     </div>
 
-    <!-- ✅ 선택된 매물 상세 사이드바 (실거래가 표시) -->
-    <div class="detail-sidebar" v-if="selectedPropertyId">
-      <div class="detail-content">
-        <div class="detail-header">
-          <h2>
+    <!-- 매물 상세 정보 -->
+    <div
+      v-if="selectedPropertyId"
+      :style="{
+        right: 0,
+        height: 'calc(100vh - 70px)',
+        width: '400px',
+        background: 'white',
+        borderLeft: '1px solid #e5e7eb',
+        marginTop: '70px',
+        padding: 0,
+        overflowY: 'auto',
+        zIndex: 11,
+        boxShadow: '-2px 0 8px rgba(0, 0, 0, 0.1)',
+      }"
+    >
+      <div :style="{ padding: '20px', fontSize: '14px', color: '#1f2937' }">
+        <div
+          :style="{
+            borderBottom: '1px solid #e5e7eb',
+            paddingBottom: '16px',
+            marginBottom: '20px',
+          }"
+        >
+          <h2
+            :style="{ fontSize: '20px', fontWeight: 'bold', marginBottom: '6px', color: '#111827' }"
+          >
             {{ getBuildingEmoji(lastFetchedBuildingType) }} {{ selectedProperty?.buildingName }}
           </h2>
-          <p class="property-address">
+          <p :style="{ color: '#6b7280', fontSize: '14px', margin: 0 }">
             {{ selectedProperty?.emdName }} · {{ selectedProperty?.roadName }}
           </p>
         </div>
 
-        <div class="deals-section">
-          <h3>실거래가 내역</h3>
+        <div>
+          <div
+            :style="{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+            }"
+          >
+            <h3 :style="{ fontSize: '16px', fontWeight: 600, color: '#374151', margin: 0 }">
+              실거래가 내역
+            </h3>
+            <div :style="{ display: 'flex', gap: '8px', alignItems: 'center' }">
+              <label :style="checkboxLabelStyle"
+                ><input type="checkbox" v-model="dealTypes" value="전세" /> 전세</label
+              >
+              <label :style="checkboxLabelStyle"
+                ><input type="checkbox" v-model="dealTypes" value="월세" /> 월세</label
+              >
+              <label :style="checkboxLabelStyle"
+                ><input type="checkbox" v-model="dealTypes" value="매매" /> 매매</label
+              >
+            </div>
+          </div>
 
-          <div v-if="!houseDeals || houseDeals.length === 0" class="no-deals">
+          <div
+            v-if="!filteredDeals || filteredDeals.length === 0"
+            :style="{
+              textAlign: 'center',
+              color: '#6b7280',
+              padding: '40px 20px',
+              background: '#f9fafb',
+              borderRadius: '8px',
+            }"
+          >
             실거래가 데이터가 없습니다.
           </div>
 
-          <div class="deals-list" v-else>
-            <div class="deal-item" v-for="deal in houseDeals || []" :key="deal.id">
-              <div class="deal-main">
-                <div class="deal-price">
-                  <span class="deal-type">{{
-                    getDealType(deal.dealAmount, deal.monthlyRent)
-                  }}</span>
-                  <span class="price">{{ formatDealInfo(deal.dealAmount, deal.monthlyRent) }}</span>
+          <div v-else :style="{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }">
+            <div
+              v-for="deal in filteredDeals || []"
+              :key="deal.id"
+              :style="{
+                background: '#f8fafc',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '12px',
+                transition: 'all 0.2s ease',
+              }"
+            >
+              <div
+                :style="{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '8px',
+                }"
+              >
+                <div :style="{ display: 'flex', flexDirection: 'column', gap: '4px' }">
+                  <span
+                    :style="{
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: '#6b7280',
+                      background: '#e5e7eb',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      width: 'fit-content',
+                    }"
+                  >
+                    {{ getDealType(deal) }}
+                  </span>
+                  <span :style="{ fontSize: '18px', fontWeight: 700, color: '#1f2937' }">
+                    {{ formatDealInfo(deal.dealAmount, deal.monthlyRent) }}
+                  </span>
                 </div>
-                <div class="deal-date">
+                <div :style="{ fontSize: '13px', color: '#6b7280', fontWeight: 500 }">
                   {{ formatDate(deal.dealYear, deal.dealMonth, deal.dealDay) }}
                 </div>
               </div>
 
-              <div class="deal-details">
-                <div class="area-info">
-                  <span class="area">{{ formatArea(deal.exclusiveArea) }}</span>
-                  <span class="floor">{{ deal.floor }}층</span>
+              <div
+                :style="{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #e5e7eb',
+                }"
+              >
+                <div :style="{ display: 'flex', gap: '12px', fontSize: '13px', color: '#4b5563' }">
+                  <span :style="{ fontWeight: 500 }">{{ formatArea(deal.exclusiveArea) }}</span>
+                  <span :style="{ color: '#6b7280' }">{{ deal.floor }}층</span>
                 </div>
               </div>
             </div>
@@ -106,20 +259,35 @@
       </div>
     </div>
 
-    <div id="kakao-map"></div>
+    <!-- 카카오 맵 -->
+    <div id="kakao-map" :style="{ flex: 1, height: '100%' }"></div>
 
-    <!-- 토스트 알림 -->
-    <div v-if="toastMessage" class="toast">{{ toastMessage }}</div>
+    <!-- 토스트 -->
+    <div
+      v-if="toastMessage"
+      :style="{
+        position: 'fixed',
+        bottom: '30px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: '#1f2937',
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '8px',
+        fontWeight: 500,
+        zIndex: 9999,
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+      }"
+    >
+      {{ toastMessage }}
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, getCurrentInstance } from 'vue'
+import { ref, watch, onMounted, getCurrentInstance, computed } from 'vue'
 import axios from 'axios'
 
-// ✅ 모든 반응형 상태 정의
-const markers = ref([])
-const selectedPropertyId = ref(null)
 const buildingType = ref('')
 const sido = ref('')
 const gugun = ref('')
@@ -127,12 +295,52 @@ const dong = ref('')
 const sidoList = ref([])
 const gugunList = ref([])
 const dongList = ref([])
+const loading = ref(false)
+const toastMessage = ref('')
+
+const selectStyle = {
+  padding: '10px 14px',
+  fontSize: '14px',
+  border: '1px solid #d1d5db',
+  borderRadius: '8px',
+  backgroundColor: '#f9fafb',
+  minWidth: '140px',
+}
+
+const buttonStyle = {
+  padding: '10px 20px',
+  backgroundColor: '#3b82f6',
+  color: 'white',
+  borderRadius: '8px',
+  fontWeight: 'bold',
+  cursor: 'pointer',
+}
+
+const paginationButtonStyle = {
+  padding: '8px 16px',
+  borderRadius: '6px',
+  background: '#e5e7eb',
+  fontWeight: 500,
+  cursor: 'pointer',
+}
+
+const checkboxLabelStyle = {
+  fontSize: '13px',
+  color: '#374151',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+}
+
+// ✅ 모든 반응형 상태 정의
+const markers = ref([])
+const selectedPropertyId = ref(null)
+
 const propertyList = ref([])
 const pageNo = ref(1)
 const hasNext = ref(false)
 const pageSize = 10
-const loading = ref(false)
-const toastMessage = ref('')
+
 const lastFetchedBuildingType = ref('')
 const houseDeals = ref([])
 const selectedProperty = ref(null)
@@ -151,6 +359,20 @@ const emojiMap = {
   VILLA: '🏘️',
   OFFICETEL: '🏙️',
 }
+
+const dealTypes = ref(['전세', '월세', '매매'])
+
+const contractTypeMap = {
+  전세: 'JEONSE',
+  월세: 'MONTHLY',
+  매매: 'SALE',
+}
+
+const filteredDeals = computed(() =>
+  houseDeals.value.filter((deal) => {
+    return dealTypes.value.some((type) => deal.contractType === contractTypeMap[type])
+  }),
+)
 
 const getBuildingEmoji = (type) => emojiMap[type] || '🏠'
 
@@ -172,11 +394,13 @@ const formatArea = (area) => {
   return `${area}㎡ (${(area * 0.3025).toFixed(1)}평)`
 }
 
-const getDealType = (dealAmount, monthlyRent) => {
-  if (monthlyRent > 0) {
-    return dealAmount > 0 ? '전세' : '월세'
+const getDealType = (deal) => {
+  const map = {
+    JEONSE: '전세',
+    MONTHLY: '월세',
+    SALE: '매매',
   }
-  return '매매'
+  return map[deal.contractType] || '기타'
 }
 
 const formatDealInfo = (dealAmount, monthlyRent) => {
@@ -287,7 +511,7 @@ const fetchSido = async () => {
 }
 
 const fetchGugun = async (sidoCode) => {
-  const res = await fetch(`/api/region/gugun?sidoCode=${sidoCode}`)
+  const res = await fetch(`/api/region/sido/${sidoCode}/gugun`)
   gugunList.value = (await res.json()).map((item) => ({ code: item.code, name: item.name }))
   gugun.value = ''
   dongList.value = []
@@ -295,7 +519,7 @@ const fetchGugun = async (sidoCode) => {
 }
 
 const fetchDong = async (sidoCode, gugunCode) => {
-  const res = await fetch(`/api/region/dong?sidoCode=${sidoCode}&gugunCode=${gugunCode}`)
+  const res = await fetch(`/api/region/gugun/${gugunCode}/dong`)
   dongList.value = (await res.json()).map((item) => ({ code: item.code, name: item.name }))
   dong.value = ''
 }
@@ -363,286 +587,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.map-container {
-  display: flex;
-  height: 100vh;
-  position: relative;
-}
-
-.region-select-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  padding: 12px 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  z-index: 10;
-  border-radius: 0;
-}
-
-.region-select {
-  padding: 10px 14px;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: #f9fafb;
-  min-width: 140px;
-}
-
-.search-button {
-  padding: 10px 20px;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 8px;
-  font-weight: bold;
-}
-
-.search-button:disabled {
-  background-color: #e5e7eb;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.spinner {
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #3b82f6;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.property-sidebar {
-  width: 360px;
-  background: #f8fafc;
-  padding: 20px;
-  border-left: 1px solid #e5e7eb;
-  overflow-y: auto;
-  height: calc(100vh - 70px);
-  margin-top: 70px;
-  display: flex;
-  flex-direction: column;
-}
-
-.property-list {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.property-item {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 16px;
-  font-size: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.property-item:hover {
-  border-color: #3b82f6;
-  transform: translateY(-1px);
-}
-
-.building-icon {
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-.no-result {
-  text-align: center;
-  color: #6b7280;
-  margin-top: 20px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.pagination button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: #e5e7eb;
-  font-weight: 500;
-}
-
-.pagination button:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-#kakao-map {
-  flex: 1;
-  height: 100%;
-}
-
-.toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f2937;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  z-index: 9999;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.property-item.selected {
-  border-color: #3b82f6;
-  background-color: #eef2ff;
-}
-
-.detail-sidebar {
-  position: fixed;
-  right: 0;
-  margin-top: 70px;
-  height: calc(100vh - 70px);
-  width: 400px;
-  background: white;
-  border-left: 1px solid #e5e7eb;
-  padding: 0;
-  overflow-y: auto;
-  z-index: 11;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-}
-
-.detail-content {
-  padding: 20px;
-  font-size: 14px;
-  color: #1f2937;
-}
-
-.detail-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-}
-
-.detail-header h2 {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #111827;
-}
-
-.property-address {
-  color: #6b7280;
-  font-size: 14px;
-  margin: 0;
-}
-
-.deals-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #374151;
-}
-
-.no-deals {
-  text-align: center;
-  color: #6b7280;
-  padding: 40px 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-.deals-list {
-  max-height: calc(100vh - 220px);
-  overflow-y: auto;
-}
-
-.deal-item {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  transition: all 0.2s ease;
-}
-
-.deal-item:hover {
-  background: #f1f5f9;
-  border-color: #3b82f6;
-}
-
-.deal-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.deal-price {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.deal-type {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background: #e5e7eb;
-  padding: 2px 8px;
-  border-radius: 12px;
-  width: fit-content;
-}
-
-.price {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.deal-date {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.deal-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 8px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.area-info {
-  display: flex;
-  gap: 12px;
-  font-size: 13px;
-  color: #4b5563;
-}
-
-.area {
-  font-weight: 500;
-}
-
-.floor {
-  color: #6b7280;
-}
-</style>
+<style scoped></style>
