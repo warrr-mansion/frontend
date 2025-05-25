@@ -8,6 +8,7 @@ import LoginView from '@/components/Login/LoginView.vue'
 import SignUpView from '@/components/SignUp/SignUpView.vue'
 import MemberDetail from '@/views/member/MemberDetail.vue'
 import MyPageView from '@/components/member/MyPageView.vue'
+import ChatBot from '@/views/ChatBot.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: MainPage },
@@ -19,6 +20,7 @@ const routes = [
   { path: '/signup', name: 'SignUpView', component: SignUpView, props: true },
   { path: '/memberDetail', name: 'MemberDetail', component: MemberDetail, props: true },
   { path: '/myPage', name: 'MyPageView', component: MyPageView, props: true },
+  { path: '/chatBot', name: 'ChatBot', component: ChatBot, props: true },
 ]
 
 const router = createRouter({
