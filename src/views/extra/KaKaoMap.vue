@@ -429,7 +429,7 @@ const fetchProperties = async () => {
     queryParams.emd = dong.value.substring(dong.value.length - 5)
   }
 
-  const url = `/v1/houseinfo/type/${typeParam}`
+  const url = `/v1/houses/type/${typeParam}`
   const fullQuery = new URLSearchParams(queryParams).toString()
   console.log('📦 [요청 전송]', `${url}?${fullQuery}`)
   console.log('📌 [요청 파라미터]', queryParams)
@@ -460,17 +460,15 @@ const clearAllMarkers = () => {
 }
 
 const fetchHouseDeals = async (propertyId) => {
-  const url = `/v1/housedeal/${propertyId}`
-  const queryParams = {
-    buildingType: lastFetchedBuildingType.value || buildingType.value,
-  }
+  const buildingParam = lastFetchedBuildingType.value || buildingType.value
+  const url = `/v1/houses/${propertyId}/type/${buildingParam}/deals`
 
-  console.log('🏠 [실거래가 요청 전송]', `${url}?${new URLSearchParams(queryParams).toString()}`)
+  console.log('🏠 [실거래가 요청 전송]', url)
   console.log('📌 [매물 ID]', propertyId)
-  console.log('📌 [건물 유형]', queryParams.buildingType)
+  console.log('📌 [건물 유형]', buildingParam) // ✅ 이걸로 충분함
 
   try {
-    const res = await axios.get(url, { params: queryParams })
+    const res = await axios.get(url)
     console.log('✅ [실거래가 응답 수신]', res.data)
 
     if (res.data.isSuccess && res.data.result) {
