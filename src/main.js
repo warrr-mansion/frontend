@@ -1,7 +1,8 @@
-import { createApp, ref } from 'vue'
-import App from './App.vue'
+import { createApp, reactive } from 'vue'
+import App from './views/App.vue'
+import router from './router'
 
-// TODO: 01. bootstrap관련 css와 js를 로딩하세요.
+// TODO: 01. bootstrap 관련 css와 js를 로딩하세요.
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 // END
@@ -38,22 +39,20 @@ function loadKakaoMapSDK() {
     document.head.appendChild(script)
   })
 }
-// 나중에 원하는 시점에 loadKakaoMapSDK().then(kakao => { /* 지도 로직 */ }) 호출
 // END
 
 const app = createApp(App)
 
 app.use(vuetify)
+app.use(router)
 
-// 임시로 전역에서 관리할 상태들 - 추후 pinia로 변경
-app.provide(
-  'globalStatus',
-  ref({
-    isLoggedIn: false,
-    loginUser: {},
-  }),
-)
+// ✅ globalStatus를 반응형으로 생성하고 전역에 주입
+const globalStatus = reactive({
+  isLoggedIn: false,
+  loginUser: {},
+})
+app.provide('globalStatus', globalStatus)
 
-app.config.globalProperties.$loadKakaoMapSDK = loadKakaoMapSDK // 전역에서 사용 가능하도록 등록
+app.config.globalProperties.$loadKakaoMapSDK = loadKakaoMapSDK
 
 app.mount('#app')

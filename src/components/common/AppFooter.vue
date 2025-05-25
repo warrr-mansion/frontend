@@ -32,27 +32,42 @@
 
 <style scoped>
 .footer-wrapper {
-  background-color: #f9f9f9;
-  border-top: 1px solid #ddd;
+  background-color: #e5e5e5; /* 원하는 회색으로 설정 */
+  border-top: 1px solid #ccc;
   font-size: 14px;
   color: #666;
+
+  height: 100px;
+  box-sizing: border-box;
 }
 
+/* 💡 margin-left → padding-left로 대체해 배경이 끊기지 않게 */
 .footer-container {
+  max-width: 1850px;
   display: flex;
-  align-items: flex-start;
-  padding: 10px 0;
+  align-items: center;
+  padding-left: 30px; /* ✅ 수정: 배경 끊김 방지 */
+  justify-content: flex-start;
+}
+
+/* 불필요한 배경 지정 제거 */
+.footer-left,
+.footer-right,
+.footer-divider {
+  background: transparent;
 }
 
 .footer-left {
-  flex: 1;
+  flex: 0 0 auto; /* flex-grow를 0으로 변경하여 내용물 크기만큼만 차지하도록 함 */
+  margin-right: 20px; /* 오른쪽 마진 추가 */
 }
 
 .footer-divider {
   width: 1px;
-  height: 100px; /* 고정 높이로 설정하여 수직선 보이도록 */
+  height: 80px;
   background-color: #ccc;
-  margin: 5px 5px;
+  margin-right: 40px; /* ✅ 링크와 수직선 사이 간격 */
+  margin: 10px 10px;
 }
 
 .footer-right {
@@ -63,7 +78,6 @@
 .footer-column {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .footer-column a {
