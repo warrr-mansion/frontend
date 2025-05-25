@@ -4,6 +4,12 @@
       <h1 class="detail-title">{{ notice.title }}</h1>
       <p class="detail-date">{{ notice.date }}</p>
       <p class="detail-content">{{ notice.content }}</p>
+
+      <!-- 로그인한 경우 수정/삭제 버튼 표시 -->
+      <div v-if="globalStatus.isLoggedIn" class="action-buttons">
+        <button class="edit-btn" @click="goToEdit">수정</button>
+        <button class="delete-btn" @click="deleteNotice">삭제</button>
+      </div>
     </div>
     <div v-else>
       <p>공지사항을 불러오는 중이거나 존재하지 않습니다.</p>
@@ -12,11 +18,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
 const route = useRoute()
+const router = useRouter()
+const globalStatus = inject('globalStatus')
 const notice = ref(null)
 const id = route.params.id
 
@@ -33,6 +41,31 @@ const fetchNoticeDetail = async () => {
   } catch (err) {
     console.error('공지사항 상세 조회 실패:', err)
     notice.value = null
+  }
+}
+
+const goToEdit = () => {
+  router.push({
+    name: 'NoticeWrite',
+    query: {
+      mode: 'edit',
+      id: notice.value.id,
+      title: notice.value.title,
+      content: notice.value.content,
+    },
+  })
+}
+
+const deleteNotice = async () => {
+  if (!confirm('정말로 삭제하시겠습니까?')) return
+
+  try {
+    await axios.delete(`/v1/notice/${id}`)
+    alert('공지사항이 삭제되었습니다.')
+    router.push({ name: 'notice' })
+  } catch (err) {
+    console.error('삭제 실패:', err)
+    alert('공지사항 삭제에 실패했습니다.')
   }
 }
 
@@ -73,5 +106,34 @@ onMounted(fetchNoticeDetail)
   color: #4b5563;
   line-height: 1.6;
   white-space: pre-line;
+}
+.action-buttons {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.edit-btn,
+.delete-btn {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+.edit-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+.edit-btn:hover {
+  background-color: #2563eb;
+}
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+}
+.delete-btn:hover {
+  background-color: #dc2626;
 }
 </style>

@@ -1,35 +1,60 @@
 <template>
   <div class="notice-write-wrapper">
     <div class="form-box">
-      <h1 class="form-title">공지사항 작성</h1>
+      <h1 class="form-title">{{ isEditMode ? '공지사항 수정' : '공지사항 작성' }}</h1>
       <input v-model="title" type="text" placeholder="제목을 입력하세요" class="form-input" />
       <textarea v-model="content" placeholder="내용을 입력하세요" class="form-textarea"></textarea>
-      <button @click="submitNotice" class="submit-btn">작성</button>
+      <button @click="submitNotice" class="submit-btn">
+        {{ isEditMode ? '수정' : '작성' }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
+const route = useRoute()
+const router = useRouter()
+
+const isEditMode = route.query.mode === 'edit'
+const id = route.query.id
 const title = ref('')
 const content = ref('')
-const router = useRouter()
+
+onMounted(() => {
+  if (isEditMode) {
+    title.value = route.query.title || ''
+    content.value = route.query.content || ''
+  }
+})
 
 const submitNotice = async () => {
   try {
-    console.log('요청 URL 확인', import.meta.env.VITE_API_URL)
-    await axios.post('/v1/notice', {
-      title: title.value,
-      content: content.value,
-    })
-    alert('공지사항이 등록되었습니다.')
+    if (isEditMode) {
+      if (!id) {
+        alert('수정할 공지사항 ID가 없습니다.')
+        return
+      }
+
+      await axios.put(`/v1/notice/${id}`, {
+        title: title.value,
+        content: content.value,
+      })
+      alert('공지사항이 수정되었습니다.')
+    } else {
+      await axios.post('/v1/notice', {
+        title: title.value,
+        content: content.value,
+      })
+      alert('공지사항이 등록되었습니다.')
+    }
     router.push({ name: 'notice' })
   } catch (err) {
-    console.error('공지사항 등록 실패:', err)
-    alert('공지사항 등록에 실패했습니다.')
+    console.error('공지사항 등록/수정 실패:', err)
+    alert('요청 처리에 실패했습니다.')
   }
 }
 </script>
