@@ -9,6 +9,7 @@ import SignUpView from '@/components/SignUp/SignUpView.vue'
 import MemberDetail from '@/views/member/MemberDetail.vue'
 import MyPageView from '@/components/member/MyPageView.vue'
 import ChatBot from '@/views/ChatBot.vue'
+import NoticeWrite from '@/views/NoticeWrite.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: MainPage },
@@ -21,6 +22,7 @@ const routes = [
   { path: '/memberDetail', name: 'MemberDetail', component: MemberDetail, props: true },
   { path: '/myPage', name: 'MyPageView', component: MyPageView, props: true },
   { path: '/chatBot', name: 'ChatBot', component: ChatBot, props: true },
+  { path: '/noticeWrite', name: 'NoticeWrite', component: NoticeWrite, props: true },
 ]
 
 const router = createRouter({
