@@ -20,8 +20,8 @@
           👤
         </div>
         <div>
-          <h2 class="text-2xl font-bold">김규찬 님</h2>
-          <p class="text-base">email : gyudol@naver.com</p>
+          <h2 class="text-2xl font-bold">{{ nickname }} 님</h2>
+          <p class="text-base">email : {{ email }}</p>
         </div>
       </div>
     </div>
@@ -81,11 +81,59 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject, onMounted } from 'vue'
+import axios from 'axios'
 import backgroundUrl from '@/assets/img/mainbackground.jpg'
 
-// 현재 선택된 탭
+// ✅ 전역 상태 불러오기
+const globalStatus = inject('globalStatus')
+
+// ✅ 사용자 정보 상태
+const nickname = ref('')
+const email = ref('')
 const activeTab = ref('찜한 매물')
+
+// ✅ 쿠키에서 accessToken 추출하는 유틸
+function getCookie(name) {
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+  return null
+}
+
+// ✅ 컴포넌트 마운트 시 사용자 정보 조회
+onMounted(async () => {
+  try {
+    const accessToken = getCookie('accessToken')
+    if (!accessToken) {
+      console.warn('accessToken이 없습니다.')
+      return
+    }
+
+    const res = await axios.get('/v1/member', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    const result = res.data.result
+    nickname.value = result.nickname
+    email.value = result.email
+
+    // ✅ 전역 상태 업데이트
+    if (globalStatus) {
+      globalStatus.isLoggedIn = true
+      globalStatus.loginUser = {
+        uuid: result.memberUuid,
+        nickname: result.nickname,
+        email: result.email,
+        role: result.role,
+      }
+    }
+  } catch (err) {
+    console.error('회원 정보 불러오기 실패:', err)
+  }
+})
 </script>
 
 <style scoped></style>

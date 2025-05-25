@@ -12,10 +12,7 @@
 
       <!-- ✅ 실제 콘텐츠 (z-10으로 오버레이 위로) -->
       <div class="relative z-10 max-w-5xl mx-auto text-center">
-        <h1
-          class="text-4xl font-bold mb-6 cursor-pointer hover:text-yellow-300 transition"
-          @click="login"
-        >
+        <h1 class="text-4xl font-bold mb-6 cursor-pointer hover:text-yellow-300 transition">
           ZipFlex
         </h1>
         <div class="relative max-w-xl mx-auto">
