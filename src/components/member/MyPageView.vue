@@ -10,19 +10,28 @@
         class="absolute inset-0 bg-gradient-to-r from-purple-800 to-indigo-800 opacity-70 z-0"
       ></div>
 
-      <!-- 사용자 정보 콘텐츠 (크기 통일 + 왼쪽 정렬) -->
-      <div
-        class="relative z-10 max-w-5xl mx-auto px-6 flex items-center justify-start gap-6 w-full"
-      >
-        <div
-          class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-gray-500 text-4xl"
+      <!-- 사용자 정보 콘텐츠 + 버튼 (양 끝 정렬) -->
+      <div class="relative z-10 max-w-5xl mx-auto px-6 flex justify-between items-center w-full">
+        <!-- 왼쪽: 프로필 정보 -->
+        <div class="flex items-center gap-6">
+          <div
+            class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-gray-500 text-4xl"
+          >
+            👤
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold">{{ nickname }} 님</h2>
+            <p class="text-base">email : {{ email }}</p>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 회원정보 수정 버튼 -->
+        <router-link
+          to="/userInfoEdit"
+          class="bg-white text-indigo-800 font-semibold px-4 py-2 rounded hover:bg-gray-100 shadow text-decoration:none"
         >
-          👤
-        </div>
-        <div>
-          <h2 class="text-2xl font-bold">{{ nickname }} 님</h2>
-          <p class="text-base">email : {{ email }}</p>
-        </div>
+          회원정보 수정
+        </router-link>
       </div>
     </div>
 

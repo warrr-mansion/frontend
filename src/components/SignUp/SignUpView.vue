@@ -64,6 +64,7 @@
           <input
             id="email"
             v-model="member.email"
+            @input="handleEmailInput"
             type="email"
             placeholder="example@zipflex.com"
             required
@@ -75,6 +76,44 @@
               font-size: 0.9rem;
             "
           />
+
+          <!-- ✨ 이메일 형식 오류 메시지 -->
+          <p v-if="emailError" style="margin-top: 4px; font-size: 0.75rem; color: #ef4444">
+            유효한 이메일 형식을 입력해주세요.
+          </p>
+
+          <!-- ✨ 중복 확인 버튼 -->
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px">
+            <button
+              type="button"
+              @click="checkEmail"
+              style="
+                flex-shrink: 0;
+                padding: 6px 12px;
+                background-color: #e5e7eb;
+                border-radius: 4px;
+                font-size: 0.8rem;
+                border: none;
+                cursor: pointer;
+              "
+            >
+              중복 확인
+            </button>
+
+            <span
+              v-if="isDuplicated"
+              :style="{
+                fontSize: '0.8rem',
+                color: isDuplicated === 'true' ? '#ef4444' : '#10b981',
+              }"
+            >
+              {{
+                isDuplicated === 'true'
+                  ? '이미 사용 중인 이메일입니다.'
+                  : '사용 가능한 이메일입니다.'
+              }}
+            </span>
+          </div>
         </div>
 
         <div style="margin-bottom: 20px">
@@ -138,30 +177,42 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const error = ref('') // error 관리
-const canUse = ref('') // email 중복 관리
+const isDuplicated = ref('') // email 중복 관리
+const emailError = ref(false)
 const router = useRouter()
-const nickname = ref('')
-const email = ref('')
-const password = ref('')
 const member = ref({
   nickname: '',
   email: '',
   password: '',
 }) // Member 관리
 
+// 이메일 입력 시 호출되는 함수
+const handleEmailInput = () => {
+  isDuplicated.value = ''
+
+  const email = member.value.email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  emailError.value = email && !emailPattern.test(email)
+}
+
 const registMember = async () => {
   error.value = ''
 
+  if (isDuplicated.value !== 'false') {
+    alert('이메일 중복 확인을 해주세요.')
+    return
+  }
+
   try {
     const res = await axios.post('/v1/auth/sign-up', member.value, {
-      withCredentials: true, // 쿠키 사용 대비
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
     })
 
     alert('회원가입 성공!')
-    router.push('/login') // 로그인 페이지로 이동
+    router.push('/login')
   } catch (err) {
     console.error('회원가입 실패', err)
     error.value = err.response?.data?.message || '회원가입에 실패했습니다.'
@@ -169,8 +220,24 @@ const registMember = async () => {
 }
 
 const checkEmail = async () => {
-  const arr = ['', 'true', 'false']
-  canUse.value = arr[member.value.email?.length % 3]
-  console.log(canUse.value)
+  isDuplicated.value = ''
+
+  const email = member.value.email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailPattern.test(email)) {
+    emailError.value = true
+    alert('유효한 이메일 형식을 입력해주세요.')
+    return
+  }
+
+  try {
+    const res = await axios.get(`/v1/auth/check-email/${encodeURIComponent(email)}`)
+
+    // ✅ 여기 수정
+    isDuplicated.value = res.data.result.duplicated ? 'true' : 'false'
+  } catch (err) {
+    console.error('이메일 중복 확인 실패', err)
+    isDuplicated.value = 'false'
+  }
 }
 </script>

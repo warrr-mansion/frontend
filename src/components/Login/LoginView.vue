@@ -41,12 +41,11 @@
 <script setup>
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { signIn } from '@/api/auth.js'
 
 const router = useRouter()
 const email = ref('')
 const password = ref('')
-const error = ref('')
 
 const globalStatus = inject('globalStatus')
 
@@ -56,40 +55,15 @@ if (!globalStatus) {
 
 const login = async () => {
   try {
-    const res = await axios.post(
-      '/v1/auth/sign-in',
-      { email: email.value, password: password.value },
-      {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    const user = await signIn(email.value, password.value)
 
-    // ✅ 헤더에서 토큰 추출
-    const accessToken = res.headers['authorization']
-    const refreshToken = res.headers['x-refresh-token']
+    globalStatus.isLoggedIn = true
+    globalStatus.loginUser = user
 
-    if (!accessToken || !refreshToken) {
-      alert('로그인 실패: 토큰이 응답에 없습니다.')
-      return
-    }
-
-    // ✅ 토큰을 쿠키에 수동 저장
-    document.cookie = `accessToken=${accessToken}; path=/;`
-    document.cookie = `refreshToken=${refreshToken}; path=/;`
-
-    // ✅ 전역 로그인 상태 업데이트
-    if (globalStatus) {
-      globalStatus.isLoggedIn = true
-    }
-
-    // ✅ 이동
     router.push('/')
   } catch (err) {
     console.error('로그인 실패:', err)
-    alert(err.response?.data?.message || '이메일 또는 비밀번호가 올바르지 않습니다.')
+    alert(err.message || '로그인에 실패했습니다.')
   }
 }
 </script>
