@@ -1,5 +1,5 @@
 <template>
-  <div class="map-topbar border-t border-gray-300 pt-4 flex gap-4 items-center flex-wrap">
+  <div class="map-topbar">
     <!-- 각 드롭다운 -->
     <select v-model="localBuildingType" :style="selectStyle">
       <option disabled value="">건물 유형 선택</option>
@@ -29,8 +29,8 @@
       </option>
     </select>
 
-    <button @click="$emit('search')" :disabled="!localBuildingType" :style="buttonStyle">
-      조회
+    <button @click="$emit('add')" :disabled="!localBuildingType" :style="buttonStyle">
+      추가하기
     </button>
 
     <div
@@ -66,7 +66,7 @@ const emit = defineEmits([
   'update:sido',
   'update:gugun',
   'update:dong',
-  'search',
+  'add', // 여기만 다름
 ])
 
 const localBuildingType = computed({
@@ -95,6 +95,7 @@ const selectStyle = {
   border: '1px solid #d1d5db',
   borderRadius: '8px',
   backgroundColor: '#f9fafb',
+  color: '#111827',
   minWidth: '140px',
 }
 

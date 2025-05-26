@@ -5,14 +5,10 @@
       class="relative bg-cover bg-center h-[306px] text-white flex items-center"
       :style="{ backgroundImage: `url(${backgroundUrl})` }"
     >
-      <!-- 그라데이션 오버레이 -->
       <div
         class="absolute inset-0 bg-gradient-to-r from-purple-800 to-indigo-800 opacity-70 z-0"
       ></div>
-
-      <!-- 사용자 정보 콘텐츠 + 버튼 (양 끝 정렬) -->
       <div class="relative z-10 max-w-5xl mx-auto px-6 flex justify-between items-center w-full">
-        <!-- 왼쪽: 프로필 정보 -->
         <div class="flex items-center gap-6">
           <div
             class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-gray-500 text-4xl"
@@ -24,11 +20,9 @@
             <p class="text-base">email : {{ email }}</p>
           </div>
         </div>
-
-        <!-- 오른쪽: 회원정보 수정 버튼 -->
         <router-link
           to="/userInfoEdit"
-          class="bg-white text-indigo-800 font-semibold px-4 py-2 rounded hover:bg-gray-100 shadow text-decoration:none"
+          class="bg-white text-black font-bold px-5 py-2 rounded-lg shadow hover:bg-indigo-700 transition duration-200 no-underline"
         >
           회원정보 수정
         </router-link>
@@ -55,11 +49,27 @@
         >
           최근 본 매물
         </div>
+        <div
+          :class="[
+            activeTab === '관심지역' ? 'text-black border-b-2 border-black' : 'cursor-pointer',
+          ]"
+          @click="activeTab = '관심지역'"
+        >
+          관심지역
+        </div>
+        <div
+          :class="[
+            activeTab === '관심지역 설정' ? 'text-black border-b-2 border-black' : 'cursor-pointer',
+          ]"
+          @click="activeTab = '관심지역 설정'"
+        >
+          관심지역 설정
+        </div>
       </div>
 
-      <!-- 매물 카드 목록 -->
+      <!-- 콘텐츠 영역 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <!-- 찜한 매물 목록 -->
+        <!-- 찜한 매물 -->
         <template v-if="activeTab === '찜한 매물'">
           <div v-for="n in 3" :key="'like' + n" class="bg-white shadow rounded overflow-hidden">
             <div class="bg-gray-300 h-48"></div>
@@ -72,8 +82,8 @@
           </div>
         </template>
 
-        <!-- 최근 본 매물 목록 -->
-        <template v-else>
+        <!-- 최근 본 매물 -->
+        <template v-else-if="activeTab === '최근 본 매물'">
           <div v-for="n in 3" :key="'recent' + n" class="bg-white shadow rounded overflow-hidden">
             <div class="bg-gray-200 h-48"></div>
             <div class="bg-gray-500 text-white p-4">
@@ -82,6 +92,37 @@
               <div class="text-sm">서울특별시 서초구</div>
               <div class="text-sm">82.21㎡ / 30.0㎡</div>
             </div>
+          </div>
+        </template>
+
+        <!-- 관심지역 -->
+        <template v-else-if="activeTab === '관심지역'">
+          <div class="col-span-full bg-white p-6 rounded shadow">
+            <h3 class="text-lg font-semibold mb-2">등록된 관심지역</h3>
+            <p class="text-gray-700">서울특별시 강남구, 경기 성남시 분당구</p>
+          </div>
+        </template>
+
+        <!-- 관심지역 설정 -->
+        <template v-else-if="activeTab === '관심지역 설정'">
+          <div class="col-span-full bg-white p-6 rounded shadow">
+            <h3 class="text-lg font-semibold mb-4">관심지역 설정</h3>
+            <!-- 여기에 관심지역 선택 컴포넌트 삽입 -->
+            <FavoriteRegionSelector
+              :buildingType="buildingType"
+              :sido="sido"
+              :gugun="gugun"
+              :dong="dong"
+              :sidoList="sidoList"
+              :gugunList="gugunList"
+              :dongList="dongList"
+              :loading="loading"
+              @update:buildingType="(val) => (buildingType = val)"
+              @update:sido="(val) => (sido = val)"
+              @update:gugun="(val) => (gugun = val)"
+              @update:dong="(val) => (dong = val)"
+              @add="addFavoriteRegion"
+            />
           </div>
         </template>
       </div>
@@ -93,6 +134,7 @@
 import { ref, inject, onMounted } from 'vue'
 import axios from 'axios'
 import backgroundUrl from '@/assets/img/mainbackground.jpg'
+import FavoriteRegionSelector from '../region/FavoriteRegionSelector.vue'
 
 // ✅ 전역 상태 불러오기
 const globalStatus = inject('globalStatus')
@@ -110,6 +152,12 @@ function getCookie(name) {
   return null
 }
 
+const buildingType = ref('')
+const sido = ref('')
+const gugun = ref('')
+const dong = ref('')
+const loading = ref(false)
+
 // ✅ 컴포넌트 마운트 시 사용자 정보 조회
 onMounted(async () => {
   try {
@@ -119,7 +167,7 @@ onMounted(async () => {
       return
     }
 
-    const res = await axios.get('/v1/member', {
+    const res = await axios.get('/v1/members/me', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -143,6 +191,21 @@ onMounted(async () => {
     console.error('회원 정보 불러오기 실패:', err)
   }
 })
+
+const addFavoriteRegion = async () => {
+  loading.value = true
+  try {
+    console.log('📦 관심지역 추가 요청:', {
+      buildingType: buildingType.value,
+      sido: sido.value,
+      gugun: gugun.value,
+      dong: dong.value,
+    })
+    // 나중에 API 연결될 위치
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped></style>

@@ -118,10 +118,15 @@ const send = async () => {
   loading.value = true
 
   try {
-    const res = await axios.post('/v1/chatbot', {
-      chatUuid: chatUuid.value,
-      message: text,
-    })
+    const res = await axios.post(
+      '/v1/chatbot',
+      { message: text }, // body에는 message만
+      {
+        headers: {
+          chatUUID: chatUuid.value, // ✅ 헤더에 포함됨
+        },
+      },
+    )
 
     const answer = res.data?.result?.content
     if (answer) {

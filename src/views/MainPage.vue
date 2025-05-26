@@ -258,15 +258,11 @@ const router = useRouter()
 
 const fetchNotices = async () => {
   try {
-    const res = await axios.get('/v1/notice')
-    // 최신순 정렬 (registDate 기준 내림차순)
-    notices.value = res.data.result
-      .map((notice) => ({
-        id: notice.id,
-        title: notice.title,
-        date: notice.registDate,
-      }))
-      .sort((a, b) => b.date.localeCompare(a.date))
+    const res = await axios.get('/v1/notices')
+    console.log('📦 공지사항 응답:', res.data)
+
+    // result.content가 배열이므로 여기를 기준으로 map 등 처리
+    notices.value = res.data.result.content
   } catch (err) {
     console.error('공지사항 로딩 실패:', err)
   }

@@ -83,8 +83,10 @@
       </transition>
 
       <!-- 리뷰 패널 -->
-      <transition name="slide-fade">
-        <PropertyReviewSidebar v-if="selectedPropertyId" :propertyId="selectedPropertyId" />
+      <transition name="slide-fade" mode="out-in">
+        <div v-if="selectedPropertyId" :key="selectedPropertyId">
+          <PropertyReviewSidebar :propertyId="selectedPropertyId" />
+        </div>
       </transition>
 
       <!-- 카카오 맵 -->
@@ -154,44 +156,38 @@ const fetchProperties = async (isNewSearch = false) => {
 
   clearAllMarkers()
 
-  // 새로운 검색인 경우 페이지를 1로 초기화
   if (isNewSearch) {
     pageNo.value = 1
   }
 
   const typeParam = typeMap[buildingType.value]
-  const queryParams = {
-    page: pageNo.value, // ✅ 페이지 번호 추가
-    size: pageSize, // ✅ 페이지 크기도 명시적으로 추가
+  if (!typeParam) {
+    loading.value = false
+    return
   }
 
-  if (gugun.value) {
-    queryParams.sgg = gugun.value.substring(0, 5)
-  }
+  const query = new URLSearchParams()
+  query.append('pageNo', pageNo.value) // ✅ 평평하게
+  query.append('pageSize', pageSize)
 
-  if (dong.value) {
-    queryParams.emd = dong.value.substring(dong.value.length - 5)
-  }
+  if (gugun.value) query.append('sgg', gugun.value.substring(0, 5))
+  if (dong.value) query.append('emd', dong.value.slice(-5))
 
-  const url = `/v1/houses/type/${typeParam}`
-  const fullQuery = new URLSearchParams(queryParams).toString()
-  console.log('📦 [요청 전송]', `${url}?${fullQuery}`)
-  console.log('📌 [요청 파라미터]', queryParams)
+  const url = `/v1/houses/type/${typeParam}?${query.toString()}`
+  console.log('📦 [요청 전송]', url)
 
   try {
-    const res = await axios.get(url, { params: queryParams })
-    console.log('✅ [응답 수신]', res.data)
-
+    const res = await axios.get(url)
     const result = res.data.result
-    propertyList.value = result.content
-    hasNext.value = result.hasNext
 
+    propertyList.value = [...result.content] // ✅ 강제 반응성 트리거
+    hasNext.value = result.hasNext
     lastFetchedBuildingType.value = buildingType.value
+
     renderMarkersAndCenterMap(result.content)
     showToast('매물 조회 완료!')
   } catch (err) {
     console.error('❌ [조회 실패]', err)
-    console.error('❌ [에러 상세]', err.response?.data || err.message)
     showToast('조회 실패: 서버 오류', true)
   } finally {
     loading.value = false
@@ -260,12 +256,12 @@ const showToast = (msg, isError = false) => {
 }
 
 const fetchSido = async () => {
-  const res = await fetch('/api/region/sido')
+  const res = await fetch('/v1/regions/sido')
   sidoList.value = await res.json()
 }
 
 const fetchGugun = async (sidoCode) => {
-  const res = await fetch(`/api/region/sido/${sidoCode}/gugun`)
+  const res = await fetch(`/v1/regions/sido/${sidoCode}/gugun`)
   gugunList.value = (await res.json()).map((item) => ({ code: item.code, name: item.name }))
   gugun.value = ''
   dongList.value = []
@@ -273,22 +269,22 @@ const fetchGugun = async (sidoCode) => {
 }
 
 const fetchDong = async (sidoCode, gugunCode) => {
-  const res = await fetch(`/api/region/gugun/${gugunCode}/dong`)
+  const res = await fetch(`/v1/regions/gugun/${gugunCode}/dong`)
   dongList.value = (await res.json()).map((item) => ({ code: item.code, name: item.name }))
   dong.value = ''
 }
 
 const selectProperty = (property) => {
   const isSameProperty = selectedPropertyId.value === property.id
+  console.log('📌 selectProperty 클릭됨:', property.id)
 
   if (isSameProperty) {
-    // 동일 매물 다시 클릭: 선택 해제 (사이드바 닫힘)
     selectedPropertyId.value = null
-    selectedProperty.value = null
+    //selectedProperty.value = null
   } else {
-    // 새 매물 선택: 상세 + 리뷰 열기
     selectedPropertyId.value = property.id
-    selectedProperty.value = property
+    //selectedProperty.value = property
+    console.log('✅ selectedPropertyId set:', property.id)
 
     const latlng = new kakao.maps.LatLng(property.latitude, property.longitude)
     map.value.setCenter(latlng)

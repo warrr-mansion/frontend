@@ -3,7 +3,8 @@
     <div class="notice-box">
       <div class="notice-header">
         <h1 class="notice-title">📢 공지사항</h1>
-        <button v-if="globalStatus.isLoggedIn" @click="goToWrite" class="write-btn">글쓰기</button>
+        <!-- ✅ 관리자에게만 글쓰기 버튼 노출 -->
+        <button v-if="isAdmin" @click="goToWrite" class="write-btn">글쓰기</button>
       </div>
 
       <div class="notice-scroll-container">
@@ -28,7 +29,7 @@
 </template>
 
 <script setup>
-import { inject, ref, onMounted } from 'vue'
+import { inject, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -37,14 +38,22 @@ const router = useRouter()
 const notices = ref([])
 const loading = ref(true)
 
+// ✅ 관리자 여부 계산
+const isAdmin = computed(
+  () => globalStatus?.isLoggedIn && globalStatus?.loginUser?.role === 'ADMIN',
+)
+
 const fetchNotices = async () => {
   try {
-    const res = await axios.get('/v1/notice')
-    notices.value = res.data.result.map((notice) => ({
-      id: notice.id,
-      title: notice.title,
-      date: notice.registDate?.slice(0, 10) || '날짜 없음',
-    }))
+    const res = await axios.get('/v1/notices')
+    const content = res.data?.result?.content
+    notices.value = Array.isArray(content)
+      ? content.map((notice) => ({
+          id: notice.id,
+          title: notice.title,
+          date: notice.registDate?.slice(0, 10) || '날짜 없음',
+        }))
+      : []
   } catch (err) {
     console.error('공지사항 불러오기 실패:', err)
   } finally {

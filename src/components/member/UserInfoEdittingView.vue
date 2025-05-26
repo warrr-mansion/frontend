@@ -68,7 +68,7 @@ const passwordMessage = ref('')
 
 const checkPassword = async () => {
   try {
-    const res = await api.post('/v1/member/password-check', {
+    const res = await api.post('/v1/members/me/password-check', {
       currentPassword: currentPassword.value,
     })
     const matched = res.data?.result?.matched
@@ -84,7 +84,7 @@ const checkPassword = async () => {
 
 const changeNickname = async () => {
   try {
-    await api.patch('/v1/member/nickname', { nickname: newNickname.value })
+    await api.patch('/v1/members/me/nickname', { nickname: newNickname.value })
     nicknameMessage.value = '닉네임이 성공적으로 변경되었습니다.'
   } catch (e) {
     nicknameMessage.value = '닉네임 변경 중 오류가 발생했습니다.'
@@ -99,7 +99,7 @@ const changePassword = async () => {
   }
 
   try {
-    await api.patch('/v1/member/password', {
+    await api.patch('/v1/members/me/password', {
       currentPassword: currentPassword.value,
       newPassword: newPassword.value,
     })

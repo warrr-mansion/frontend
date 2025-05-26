@@ -3,102 +3,92 @@ import api from '@/api/axiosInstance'
 import App from './views/App.vue'
 import router from './router'
 import axios from 'axios'
+import { getCookie, setCookie, deleteCookie } from '@/utils/cookie'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { getCookie } from '@/utils/cookie'
 
-const vuetify = createVuetify({
-  components,
-  directives,
-})
-
-function loadKakaoMapSDK() {
-  return new Promise((resolve, reject) => {
-    if (window.kakao && window.kakao.maps) {
-      resolve(window.kakao)
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_JS_KEY}&autoload=false`
-    script.async = true
-    script.onload = () => {
-      window.kakao.maps.load(() => {
-        resolve(window.kakao)
-      })
-    }
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
-}
-
+const vuetify = createVuetify({ components, directives })
 const app = createApp(App)
 
 app.use(vuetify)
 app.use(router)
 
-// ✅ globalStatus를 반응형으로 생성하고 전역에 주입
+// ✅ 전역 상태
 const globalStatus = reactive({
   isLoggedIn: false,
   loginUser: {},
 })
 app.provide('globalStatus', globalStatus)
 
-// ✅ accessToken이 있으면 사용자 정보 요청 시도
-const token = localStorage.getItem('accessToken')
-if (token) {
-  try {
-    const res = await axios.get('/v1/member', {
-      headers: { Authorization: token },
-    })
+// ✅ Kakao Map SDK 로딩 함수
+function loadKakaoMapSDK() {
+  return new Promise((resolve, reject) => {
+    if (window.kakao?.maps) return resolve(window.kakao)
 
+    const script = document.createElement('script')
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_JS_KEY}&autoload=false`
+    script.async = true
+    script.onload = () => {
+      window.kakao.maps.load(() => resolve(window.kakao))
+    }
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+app.config.globalProperties.$loadKakaoMapSDK = loadKakaoMapSDK
+
+// ✅ accessToken을 쿠키에서 읽음
+const accessToken = getCookie('accessToken')
+const refreshToken = getCookie('refreshToken')
+
+// ✅ 사용자 정보 요청 함수
+async function fetchUser() {
+  try {
+    const res = await axios.post('/v1/auth/sign-in', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
     globalStatus.isLoggedIn = true
     globalStatus.loginUser = res.data.result
+    console.log('✅ 자동 로그인 성공')
   } catch (err) {
-    console.warn('자동 로그인 실패:', err)
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
+    console.warn('❌ accessToken 만료 또는 오류:', err.response?.status)
+    if (err.response?.status === 401 && refreshToken) {
+      try {
+        const reissueRes = await axios.post('/v1/auth/reissue', {
+          refreshToken,
+        })
+
+        const newAccessToken = reissueRes.data.result.accessToken
+        setCookie('accessToken', newAccessToken)
+        console.log('♻️ accessToken 재발급 성공, 사용자 재요청')
+        await fetchUser() // 재시도
+      } catch (reissueErr) {
+        console.error('🚫 재발급 실패:', reissueErr)
+        logout()
+      }
+    } else {
+      logout()
+    }
   }
 }
 
-const accessToken = getCookie('accessToken')
-console.log('🚀 accessToken from cookie:', accessToken)
-if (accessToken) {
-  axios
-    .get('/v1/member', {
-      headers: {
-        Authorization: `Bearer ${accessToken.replace(/^Bearer\s*/, '')}`, // ✅ Bearer 중복 방지
-      },
-    })
-    .then((res) => {
-      console.log('✅ 자동 로그인 성공')
-      globalStatus.isLoggedIn = true
-      globalStatus.loginUser = res.data.result
-    })
-    .catch((err) => {
-      console.warn('❌ 자동 로그인 실패:', err)
-      globalStatus.isLoggedIn = false
-      globalStatus.loginUser = {}
-    })
+// ✅ 로그아웃 함수
+function logout() {
+  globalStatus.isLoggedIn = false
+  globalStatus.loginUser = {}
+  deleteCookie('accessToken')
+  deleteCookie('refreshToken')
+  localStorage.clear()
 }
 
-// 요청 인터셉터 (기본 Authorization 자동 추가)
 if (accessToken) {
-  api
-    .get('/v1/member')
-    .then((res) => {
-      globalStatus.isLoggedIn = true
-      globalStatus.loginUser = res.data.result
-    })
-    .catch((err) => {
-      console.warn('❌ 자동 로그인 실패:', err)
-    })
+  fetchUser()
 }
-
-app.config.globalProperties.$loadKakaoMapSDK = loadKakaoMapSDK
 
 app.mount('#app')
