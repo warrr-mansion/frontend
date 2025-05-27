@@ -2,7 +2,7 @@
   <div>
     <!-- 플로팅 버튼 -->
     <div class="fixed bottom-6 right-6 z-50">
-      <button @click="show = true" class="bg-purple-800 p-1 rounded-full shadow-xl">
+      <button @click="show = !show" class="bg-purple-800 p-1 rounded-full shadow-xl">
         <img src="../assets/img/chatbot_icon.png" alt="챗봇 아이콘" class="w-14 h-14" />
       </button>
     </div>
@@ -10,7 +10,7 @@
     <!-- 챗봇 창 -->
     <div
       v-if="show"
-      class="fixed bottom-20 right-6 w-[350px] h-[500px] bg-white shadow-xl rounded-xl flex flex-col"
+      class="fixed bottom-20 right-6 w-[350px] h-[500px] bg-white shadow-xl rounded-xl flex flex-col z-[99999]"
     >
       <!-- 상단 헤더 -->
       <div class="bg-purple-700 text-white p-3 flex justify-between items-center">
@@ -63,17 +63,42 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 import axios from 'axios'
-import { v4 as uuidv4 } from 'uuid'
 
 const show = ref(false)
 const input = ref('')
 const messages = ref([{ role: 'assistant', content: '안녕하세요! 부동산 관련 질문을 해보세요 😊' }])
 const loading = ref(false)
 
-const chatUuid = ref(localStorage.getItem('chatUuid') || uuidv4())
-localStorage.setItem('chatUuid', chatUuid.value)
+// UUID 저장용 ref
+const chatUuid = ref('')
+
+// UUID 생성 함수 (36자)
+function generateRandom36Char() {
+  return crypto.randomUUID()
+}
+
+// UUID 초기화 함수
+function initializeChatUuid() {
+  const memberUuid = localStorage.getItem('memberUuid')
+
+  if (memberUuid) {
+    chatUuid.value = memberUuid
+  } else {
+    let storedChatUuid = localStorage.getItem('chatUuid')
+    if (!storedChatUuid) {
+      storedChatUuid = generateRandom36Char()
+      localStorage.setItem('chatUuid', storedChatUuid)
+    }
+    chatUuid.value = storedChatUuid
+  }
+}
+
+// ✅ 호출 위치 추가!
+onMounted(() => {
+  initializeChatUuid()
+})
 
 // 스크롤 하단 고정
 const chatContainer = ref(null)
@@ -92,32 +117,22 @@ const send = async () => {
   input.value = ''
   loading.value = true
 
-  console.log('📤 [요청 전송]', {
-    url: '/v1/chatbot',
-    payload: {
-      chatUuid: chatUuid.value,
-      message: text,
-    },
-  })
-
   try {
-    const res = await axios.post('/v1/chatbot', {
-      chatUuid: chatUuid.value,
-      message: text,
-    })
+    const res = await axios.post(
+      '/v1/chatbot',
+      { message: text }, // body에는 message만
+      {
+        headers: {
+          chatUUID: chatUuid.value, // ✅ 헤더에 포함됨
+        },
+      },
+    )
 
-    console.log('📥 [응답 수신]', res)
-
-    // ✅ 여기만 고쳤습니다
     const answer = res.data?.result?.content
-
-    if (!answer) {
-      messages.value.push({
-        role: 'assistant',
-        content: '❗ 서버로부터 유효한 답변을 받지 못했습니다.',
-      })
-    } else {
+    if (answer) {
       messages.value.push({ role: 'assistant', content: answer })
+    } else {
+      messages.value.push({ role: 'assistant', content: '❗ 서버로부터 유효한 응답이 없습니다.' })
     }
   } catch (err) {
     console.error('❌ [요청 실패]', err)

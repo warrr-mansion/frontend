@@ -5,8 +5,8 @@
       <p class="detail-date">{{ notice.date }}</p>
       <p class="detail-content">{{ notice.content }}</p>
 
-      <!-- 로그인한 경우 수정/삭제 버튼 표시 -->
-      <div v-if="globalStatus.isLoggedIn" class="action-buttons">
+      <!-- ✅ 관리자일 경우에만 수정/삭제 버튼 노출 -->
+      <div v-if="isAdmin" class="action-buttons">
         <button class="edit-btn" @click="goToEdit">수정</button>
         <button class="delete-btn" @click="deleteNotice">삭제</button>
       </div>
@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, inject, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -28,9 +28,14 @@ const globalStatus = inject('globalStatus')
 const notice = ref(null)
 const id = route.params.id
 
+// ✅ 관리자 여부 판별
+const isAdmin = computed(
+  () => globalStatus?.isLoggedIn && globalStatus?.loginUser?.role === 'ADMIN',
+)
+
 const fetchNoticeDetail = async () => {
   try {
-    const res = await axios.get(`/v1/notice/${id}`)
+    const res = await axios.get(`/v1/notices/${id}`)
     const data = res.data.result
     notice.value = {
       id: data.id,
@@ -60,7 +65,7 @@ const deleteNotice = async () => {
   if (!confirm('정말로 삭제하시겠습니까?')) return
 
   try {
-    await axios.delete(`/v1/notice/${id}`)
+    await axios.delete(`/v1/notices/${id}`)
     alert('공지사항이 삭제되었습니다.')
     router.push({ name: 'notice' })
   } catch (err) {

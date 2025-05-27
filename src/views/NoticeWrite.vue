@@ -15,7 +15,9 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useGlobalStore } from '@/stores/global'
 
+const globalStore = useGlobalStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -33,24 +35,49 @@ onMounted(() => {
 
 const submitNotice = async () => {
   try {
+    const token = globalStore?.loginUser?.accessToken
+    if (!token) {
+      alert('토큰이 존재하지 않습니다. 다시 로그인해 주세요.')
+      return
+    }
+
     if (isEditMode) {
       if (!id) {
         alert('수정할 공지사항 ID가 없습니다.')
         return
       }
 
-      await axios.put(`/v1/notice/${id}`, {
-        title: title.value,
-        content: content.value,
-      })
+      await axios.put(
+        `/v1/admin/notices/${id}`,
+        {
+          title: title.value,
+          content: content.value,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
       alert('공지사항이 수정되었습니다.')
     } else {
-      await axios.post('/v1/notice', {
-        title: title.value,
-        content: content.value,
-      })
+      await axios.post(
+        `/v1/admin/notices`,
+        {
+          title: title.value,
+          content: content.value,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
       alert('공지사항이 등록되었습니다.')
     }
+
     router.push({ name: 'notice' })
   } catch (err) {
     console.error('공지사항 등록/수정 실패:', err)

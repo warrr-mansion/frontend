@@ -10,6 +10,7 @@ import MemberDetail from '@/views/member/MemberDetail.vue'
 import MyPageView from '@/components/member/MyPageView.vue'
 import ChatBot from '@/views/ChatBot.vue'
 import NoticeWrite from '@/views/NoticeWrite.vue'
+import UserInfoEdittingView from '@/components/member/UserInfoEdittingView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: MainPage },
@@ -23,6 +24,7 @@ const routes = [
   { path: '/myPage', name: 'MyPageView', component: MyPageView, props: true },
   { path: '/chatBot', name: 'ChatBot', component: ChatBot, props: true },
   { path: '/noticeWrite', name: 'NoticeWrite', component: NoticeWrite, props: true },
+  { path: '/userInfoEdit', name: 'UserInfoEdit', component: UserInfoEdittingView, props: true },
 ]
 
 const router = createRouter({

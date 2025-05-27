@@ -41,18 +41,28 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { signIn } from '@/api/auth.js'
+import { useGlobalStore } from '@/stores/global'
+import { getCookie } from '@/utils/cookie'
 
 const router = useRouter()
+const globalStore = useGlobalStore()
+
 const email = ref('')
 const password = ref('')
 
-const login = () => {
-  // 예시용: 이메일/비밀번호 콘솔 출력
-  console.log('로그인 시도:', email.value, password.value)
+const login = async () => {
+  try {
+    const user = await signIn(email.value, password.value)
 
-  // 실제 구현에서는 API 호출 후 인증 처리
-  alert('로그인 성공 (예시)')
-  router.push('/') // 로그인 후 홈으로 이동
+    // ✅ Pinia 스토어에 로그인 상태 저장
+    globalStore.setUser({ user, accessToken: getCookie('accessToken') }) // user = { uuid, role }
+
+    router.push('/')
+  } catch (err) {
+    console.error('로그인 실패:', err)
+    alert(err.message || '로그인에 실패했습니다.')
+  }
 }
 </script>
 
