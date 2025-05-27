@@ -58,11 +58,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Add GitHub IP to Security Group
-        run: aws ec2 authorize-security-group-ingress \
-          --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
-          --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      - name: Add GitHub IP to AWS Security Group
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: Deploy Docker container to EC2
         uses: appleboy/ssh-action@v0.1.6
@@ -80,15 +78,11 @@ jobs:
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_CONTAINER }}:latest
 
             echo "Running new container..."
-            sudo docker run -d --name ${{ secrets.DOCKER_CONTAINER }} -p ${{ secrets.HOST_PORT }}:${{ secrets.APPLICATION_PORT }} \
-              --network ${{ secrets.DOCKER_NETWORK }} \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_CONTAINER }}:latest
+            sudo docker run -d --name ${{ secrets.DOCKER_CONTAINER }} -p ${{ secrets.HOST_PORT }}:${{ secrets.APPLICATION_PORT }} --network ${{secrets.DOCKER_NETWORK}} ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_CONTAINER }}:latest
 
             echo "Cleaning up unused images..."
             sudo docker image prune -f
 
-      - name: Remove GitHub IP from Security Group
-        run: aws ec2 revoke-security-group-ingress \
-          --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
-          --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      - name: Remove GitHub IP from AWS Security Group
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} --cidr ${{ steps.ip.outputs.ipv4 }}/32
