@@ -159,11 +159,15 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { getCookie } from '@/utils/cookie'
 
+const showToast = (message) => {
+  alert(message) // 또는 별도 토스트 컴포넌트로 대체
+}
+
 const registerFavoriteHouse = async () => {
   try {
     console.log('💖 관심매물 등록 요청:', props.property.id)
 
-    const accessToken = getCookie('accessToken') // 쿠키 또는 상태관리에서 토큰 가져오기
+    const accessToken = getCookie('accessToken')
 
     await axios.post(
       '/v1/favorites',
@@ -177,8 +181,11 @@ const registerFavoriteHouse = async () => {
         },
       },
     )
+
+    showToast('📌 관심매물로 등록되었습니다!')
   } catch (err) {
     console.error('❌ 관심매물 등록 실패', err)
+    showToast('❗ 관심매물 등록에 실패했습니다.')
   }
 }
 
