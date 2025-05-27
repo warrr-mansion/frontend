@@ -80,6 +80,13 @@ jobs:
             echo "Running new container..."
             sudo docker run -d --name ${{ secrets.DOCKER_CONTAINER }} -p ${{ secrets.HOST_PORT }}:${{ secrets.APPLICATION_PORT }} --network ${{secrets.DOCKER_NETWORK}} ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_CONTAINER }}:latest
 
+            echo "Removing previous HTML files..."
+            sudo rm -rf ${{ secrets.NGINX_DEPLOY_PATH }}
+            sudo mkdir -p ${{ secrets.NGINX_DEPLOY_PATH }}
+
+            echo "Copying Vue build files from container to Nginx deploy path..."
+            sudo docker cp ${{ secrets.DOCKER_CONTAINER }}:${{ secrets.VUE_DIST_PATH }} ${{ secrets.NGINX_DEPLOY_PATH }}
+
             echo "Cleaning up unused images..."
             sudo docker image prune -f
 

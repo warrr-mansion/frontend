@@ -1,5 +1,4 @@
-
-FROM node:22
+FROM node:22 AS builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y tzdata
