@@ -29,19 +29,18 @@
 </template>
 
 <script setup>
-import { inject, ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia 스토어 import
 
-const globalStatus = inject('globalStatus')
+const globalStore = useGlobalStore()
 const router = useRouter()
 const notices = ref([])
 const loading = ref(true)
 
 // ✅ 관리자 여부 계산
-const isAdmin = computed(
-  () => globalStatus?.isLoggedIn && globalStatus?.loginUser?.role === 'ADMIN',
-)
+const isAdmin = computed(() => globalStore.isLoggedIn && globalStore.loginUser?.role === 'ADMIN')
 
 const fetchNotices = async () => {
   try {
@@ -73,6 +72,7 @@ onMounted(fetchNotices)
 </script>
 
 <style scoped>
+/* 💡 스타일은 수정할 필요 없음 그대로 유지 */
 .notice-wrapper {
   height: calc(100vh - 180px);
   background-color: #f9fafb;
@@ -127,7 +127,7 @@ onMounted(fetchNotices)
 .notice-scroll-container {
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 260px); /* 헤더 포함한 실제 높이 조정 */
+  max-height: calc(100vh - 260px);
   padding: 24px;
   box-sizing: border-box;
 }
@@ -141,7 +141,6 @@ onMounted(fetchNotices)
 .notice-card {
   background: #fefefe;
   border: 1px solid #e5e7eb;
-
   border-radius: 8px;
   padding: 20px;
   cursor: pointer;

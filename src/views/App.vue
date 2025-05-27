@@ -27,4 +27,9 @@
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
 import ChatBot from './ChatBot.vue'
+
+import { updateAccessToken } from '@/api/axiosInstance'
+import { getCookie } from '@/utils/cookie'
+
+updateAccessToken(getCookie('accessToken'))
 </script>

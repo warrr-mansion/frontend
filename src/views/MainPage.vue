@@ -171,13 +171,13 @@
               class="bg-gray-50 p-5 rounded-lg shadow-sm flex flex-col items-center cursor-pointer hover:bg-indigo-50 transition duration-150 ease-in-out"
             >
               <router-link
-                :to="globalStatus.isLoggedIn ? '/myPage' : '/login'"
+                :to="globalStore.isLoggedIn ? '/myPage' : '/login'"
                 class="h-20 w-16 mb-3 rounded bg-cover bg-center"
                 :style="{ backgroundImage: `url(${favoriteUrl})` }"
-              ></router-link>
+              />
 
               <router-link
-                :to="globalStatus.isLoggedIn ? '/myPage' : '/login'"
+                :to="globalStore.isLoggedIn ? '/myPage' : '/login'"
                 class="whitespace-nowrap text-center no-underline text-gray-800 font-semibold"
               >
                 찜목록
@@ -241,8 +241,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia store import
 
 import backgroundUrl from '@/assets/img/mainbackground.jpg'
 import propertyviewUrl from '@/assets/img/매물조회.png'
@@ -255,13 +256,12 @@ import axios from 'axios'
 
 const notices = ref([])
 const router = useRouter()
+const globalStore = useGlobalStore() // ✅ Pinia 상태 사용
 
 const fetchNotices = async () => {
   try {
     const res = await axios.get('/v1/notices')
     console.log('📦 공지사항 응답:', res.data)
-
-    // result.content가 배열이므로 여기를 기준으로 map 등 처리
     notices.value = res.data.result.content
   } catch (err) {
     console.error('공지사항 로딩 실패:', err)
@@ -278,8 +278,6 @@ const formatDate = (isoDate) => {
 }
 
 onMounted(fetchNotices)
-
-const globalStatus = inject('globalStatus')
 </script>
 
 <style scoped></style>

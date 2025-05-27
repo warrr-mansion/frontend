@@ -10,14 +10,13 @@
         <router-link to="/map" class="menu">매물 조회</router-link>
         <router-link to="/news" class="menu">부동산 뉴스</router-link>
 
-        <template v-if="!globalStatus.isLoggedIn">
+        <template v-if="!globalStore.isLoggedIn">
           <router-link to="/login" class="menu">로그인</router-link>
           <router-link to="/signup" class="menu">회원가입</router-link>
         </template>
 
         <template v-else>
           <button @click="handleLogout" class="menu">로그아웃</button>
-
           <router-link to="/myPage" class="menu">마이페이지</router-link>
         </template>
       </nav>
@@ -28,17 +27,16 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { logout } from '@/api/auth'
-import { inject } from 'vue'
-
-const globalStatus = inject('globalStatus')
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia store import
 
 const router = useRouter()
+const globalStore = useGlobalStore()
 
 const handleLogout = () => {
-  logout(globalStatus, router)
+  logout()
+  router.push('/') // ✅ 로그아웃 후 홈으로 이동
 }
 </script>
-vue 복사 편집
 
 <style scoped>
 .wide-container {

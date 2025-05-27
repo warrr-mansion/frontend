@@ -1,13 +1,5 @@
 <template>
   <div class="map-topbar">
-    <!-- 각 드롭다운 -->
-    <select v-model="localBuildingType" :style="selectStyle">
-      <option disabled value="">건물 유형 선택</option>
-      <option value="APARTMENT">아파트</option>
-      <option value="VILLA">빌라</option>
-      <option value="OFFICETEL">오피스텔</option>
-    </select>
-
     <select v-model="localSido" :style="selectStyle">
       <option disabled value="">시도 선택</option>
       <option v-for="item in sidoList" :key="item.code" :value="item.code">
@@ -29,9 +21,7 @@
       </option>
     </select>
 
-    <button @click="$emit('add')" :disabled="!localBuildingType" :style="buttonStyle">
-      추가하기
-    </button>
+    <button @click="$emit('add')" :style="buttonStyle">추가하기</button>
 
     <div
       v-if="loading"
@@ -68,11 +58,6 @@ const emit = defineEmits([
   'update:dong',
   'add', // 여기만 다름
 ])
-
-const localBuildingType = computed({
-  get: () => props.buildingType,
-  set: (val) => emit('update:buildingType', val),
-})
 
 const localSido = computed({
   get: () => props.sido,

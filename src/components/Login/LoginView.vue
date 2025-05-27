@@ -39,26 +39,24 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { signIn } from '@/api/auth.js'
+import { useGlobalStore } from '@/stores/global'
+import { getCookie } from '@/utils/cookie'
 
 const router = useRouter()
+const globalStore = useGlobalStore()
+
 const email = ref('')
 const password = ref('')
-
-const globalStatus = inject('globalStatus')
-
-if (!globalStatus) {
-  throw new Error('globalStatus 주입 실패!')
-}
 
 const login = async () => {
   try {
     const user = await signIn(email.value, password.value)
 
-    globalStatus.isLoggedIn = true
-    globalStatus.loginUser = user
+    // ✅ Pinia 스토어에 로그인 상태 저장
+    globalStore.setUser({ user, accessToken: getCookie('accessToken') }) // user = { uuid, role }
 
     router.push('/')
   } catch (err) {

@@ -9,16 +9,43 @@
           marginBottom: '20px',
         }"
       >
-        <h2
+        <!-- 제목 아래 버튼 -->
+        <div
           :style="{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            marginBottom: '6px',
-            color: '#111827',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
           }"
         >
-          {{ getBuildingEmoji(buildingType) }} {{ property?.buildingName }}
-        </h2>
+          <h2
+            :style="{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              marginBottom: '6px',
+              color: '#111827',
+            }"
+          >
+            {{ getBuildingEmoji(buildingType) }} {{ property?.buildingName }}
+          </h2>
+
+          <button
+            @click="registerFavoriteHouse"
+            :style="{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+            }"
+          >
+            + 관심매물 등록
+          </button>
+        </div>
+
         <p :style="{ color: '#6b7280', fontSize: '14px', margin: 0 }">
           {{ property?.emdName }} · {{ property?.roadName }}
         </p>
@@ -129,6 +156,31 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import axios from 'axios'
+import { getCookie } from '@/utils/cookie'
+
+const registerFavoriteHouse = async () => {
+  try {
+    console.log('💖 관심매물 등록 요청:', props.property.id)
+
+    const accessToken = getCookie('accessToken') // 쿠키 또는 상태관리에서 토큰 가져오기
+
+    await axios.post(
+      '/v1/favorites',
+      {
+        favoriteType: 'HOUSE',
+        code: String(props.property.id),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+  } catch (err) {
+    console.error('❌ 관심매물 등록 실패', err)
+  }
+}
 
 const props = defineProps({
   property: Object,

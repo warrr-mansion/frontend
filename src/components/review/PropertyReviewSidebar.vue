@@ -55,10 +55,19 @@
           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
         }"
       >
-        <div :style="{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '6px' }">
-          {{ comment.nickname }}
+        <div style="display: flex; justify-content: space-between">
+          <div style="font-weight: 600">{{ comment.nickname }}</div>
+          <div v-if="isMyComment(comment)">
+            <button @click="startEdit(comment)">✏️</button>
+            <button @click="deleteComment(comment.commentId)">🗑️</button>
+          </div>
         </div>
-        <div :style="{ fontSize: '13px', color: '#374151', lineHeight: '1.5' }">
+        <div v-if="editingCommentId === comment.commentId">
+          <textarea v-model="editedContent" />
+          <button @click="submitEdit(comment.commentId)">저장</button>
+          <button @click="cancelEdit">취소</button>
+        </div>
+        <div v-else>
           {{ comment.content }}
         </div>
       </div>
@@ -131,8 +140,15 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { useGlobalStore } from '@/stores/global'
+import { getCookie } from '@/utils/cookie'
+const globalStore = useGlobalStore()
+const myUuid = computed(() => globalStore.loginUser?.uuid)
+const isMyComment = (comment) => {
+  return comment.memberUuid === myUuid.value
+}
 
 const props = defineProps({
   propertyId: {
@@ -141,20 +157,109 @@ const props = defineProps({
   },
 })
 
+const startEdit = (comment) => {
+  editingCommentId.value = comment.commentId
+  editedContent.value = comment.content
+}
+const cancelEdit = () => {
+  editingCommentId.value = null
+  editedContent.value = ''
+}
+
+const submitEdit = async (commentId) => {
+  if (!editedContent.value.trim()) {
+    alert('수정할 내용을 입력해주세요.')
+    return
+  }
+
+  const token = getCookie('accessToken')
+  if (!token) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  try {
+    console.log('✏️ [댓글 수정 요청]', {
+      commentId,
+      content: editedContent.value,
+    })
+
+    await axios.patch(
+      `/v1/auth/comments/${commentId}`,
+      {
+        content: editedContent.value,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
+
+    showToast('댓글이 수정되었습니다.')
+    cancelEdit()
+    await fetchComments()
+  } catch (err) {
+    console.error('❌ 댓글 수정 실패', err)
+    showToast('댓글 수정에 실패했습니다.')
+  }
+}
+
+const showToast = (message) => {
+  alert(message) // 가장 단순한 대체
+}
+
+const submitReview = async () => {
+  const token = getCookie('accessToken')
+  if (!token) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  try {
+    await axios.post(
+      '/v1/auth/comments',
+      {
+        houseInfoId: props.propertyId,
+        content: newComment.value,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
+
+    showToast('댓글이 등록되었습니다.')
+    newComment.value = ''
+    pageNo.value = 1
+    await fetchComments()
+  } catch (err) {
+    console.error('❌ 댓글 작성 실패', err)
+    showToast('댓글 등록에 실패했습니다.')
+  }
+}
+
+const editingCommentId = ref(null)
+const editedContent = ref('')
+
 const comments = ref([])
 const aiSummary = ref('')
 const newComment = ref('')
 
-// ✅ 누락되었던 변수 선언!
 const pageNo = ref(1)
 const pageSize = 5
 const hasNext = ref(false)
 
 const fetchComments = async () => {
+  console.log('🔍 [fetchComments 호출됨]')
+  console.log('🧑‍💻 현재 로그인한 사용자 UUID:', myUuid.value)
+
   if (!props.propertyId) {
-    console.warn('⚠️ fetchComments called without valid propertyId')
+    console.warn('⚠️ [중단] propertyId가 유효하지 않음:', props.propertyId)
     return
   }
+
   try {
     console.log('📡 [댓글 요청 시작]', {
       propertyId: props.propertyId,
@@ -169,12 +274,16 @@ const fetchComments = async () => {
       },
     })
 
-    console.log('✅ [댓글 응답 수신]', res.data)
+    console.log('✅ [댓글 응답 수신]', {
+      status: res.status,
+      isSuccess: res.data.isSuccess,
+      result: res.data.result,
+    })
 
     const result = res.data.result
 
     if (!result || !Array.isArray(result.content)) {
-      console.warn('⚠️ [댓글 응답 형식이 올바르지 않음]', result)
+      console.warn('⚠️ [댓글 응답 형식 오류] content가 배열이 아님', result)
       return
     }
 
@@ -183,15 +292,43 @@ const fetchComments = async () => {
       console.log('📄 [1페이지 댓글 갱신]', comments.value)
     } else {
       comments.value = [...comments.value, ...result.content]
-      console.log('📄 [추가 댓글 누적]', comments.value)
+      console.log('📄 [추가 댓글 누적]', result.content)
     }
 
     hasNext.value = result.hasNext
     console.log('📌 [hasNext]', hasNext.value)
   } catch (err) {
-    console.error('❌ 댓글 불러오기 실패:', err)
-    console.error('❌ 상세:', err.response?.data || err.message)
+    console.error('❌ [댓글 불러오기 실패]', {
+      error: err,
+      propertyId: props.propertyId,
+      pageNo: pageNo.value,
+    })
+    console.error('❌ [에러 상세]', err.response?.data || err.message)
     comments.value = []
+  }
+}
+
+const deleteComment = async (commentId) => {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return
+
+  const token = getCookie('accessToken')
+  if (!token) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
+  try {
+    console.log('🗑️ [댓글 삭제 요청]', commentId)
+    await axios.delete(`/v1/auth/comments/${commentId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    showToast('댓글이 삭제되었습니다.')
+    await fetchComments()
+  } catch (err) {
+    console.error('❌ 댓글 삭제 실패', err)
+    showToast('댓글 삭제에 실패했습니다.')
   }
 }
 
@@ -202,13 +339,31 @@ const loadNextPage = async () => {
 }
 
 watch(
-  () => props.propertyId,
-  (newVal) => {
-    if (!newVal) return
-    console.log('👀 [watch] propertyId 변경됨:', newVal)
-    pageNo.value = 1
-    fetchComments()
+  () => globalStore.loginUser,
+  (user) => {
+    if (user && props.propertyId) {
+      console.log('✅ [watch] 사용자 정보 로드 완료 후 fetchComments 실행')
+      pageNo.value = 1
+      fetchComments()
+    }
   },
   { immediate: true },
 )
+onMounted(async () => {
+  if (!globalStore.loginUser) {
+    try {
+      const token = getCookie('accessToken')
+      if (!token) return
+
+      const res = await axios.get('/v1/members/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      globalStore.setUser(res.data.result) // ✅ 사용자 정보 전역 저장
+      console.log('🎉 사용자 정보 불러옴:', res.data.result)
+    } catch (err) {
+      console.warn('❌ 사용자 정보 가져오기 실패:', err)
+    }
+  }
+})
 </script>
