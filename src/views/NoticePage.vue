@@ -24,6 +24,11 @@
 
         <div v-if="notices.length === 0" class="notice-empty">등록된 공지사항이 없습니다.</div>
       </div>
+      <div v-if="hasNext" class="text-center mt-4">
+        <div v-if="hasNext" class="text-center mt-4">
+          <button class="btn btn-outline-primary" @click="loadNextPage">더 보기</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -37,26 +42,45 @@ import { useGlobalStore } from '@/stores/global' // ✅ Pinia 스토어 import
 const globalStore = useGlobalStore()
 const router = useRouter()
 const notices = ref([])
-const loading = ref(true)
+const pageNo = ref(1)
+const pageSize = 10
+const hasNext = ref(false)
 
 // ✅ 관리자 여부 계산
 const isAdmin = computed(() => globalStore.isLoggedIn && globalStore.loginUser?.role === 'ADMIN')
 
-const fetchNotices = async () => {
+const fetchNotices = async (reset = false) => {
   try {
-    const res = await axios.get('/v1/notices')
-    const content = res.data?.result?.content
-    notices.value = Array.isArray(content)
-      ? content.map((notice) => ({
-          id: notice.id,
-          title: notice.title,
-          date: notice.registDate?.slice(0, 10) || '날짜 없음',
-        }))
-      : []
+    if (reset) {
+      pageNo.value = 1
+      notices.value = []
+    }
+
+    const res = await axios.get('/v1/notices', {
+      params: {
+        pageNo: pageNo.value,
+        pageSize: pageSize,
+      },
+    })
+
+    const result = res.data?.result
+
+    if (!Array.isArray(result?.content)) {
+      console.warn('공지사항 content가 배열이 아님')
+      return
+    }
+
+    const mapped = result.content.map((notice) => ({
+      id: notice.id,
+      title: notice.title,
+      content: notice.content,
+      date: notice.registDate?.slice(0, 10) || '',
+    }))
+
+    notices.value.push(...mapped)
+    hasNext.value = result.hasNext
   } catch (err) {
     console.error('공지사항 불러오기 실패:', err)
-  } finally {
-    loading.value = false
   }
 }
 
@@ -68,7 +92,14 @@ const goToWrite = () => {
   router.push({ name: 'NoticeWrite' })
 }
 
-onMounted(fetchNotices)
+const loadNextPage = async () => {
+  pageNo.value++
+  await fetchNotices()
+}
+
+onMounted(() => {
+  fetchNotices(true) // reset=true
+})
 </script>
 
 <style scoped>

@@ -40,47 +40,53 @@
 </template>
 
 <script setup>
-import { useTemplateRef, inject, computed } from 'vue'
-import defaultProfileImg from '@/assets/img/profile.png' // assets의 이미지 로딩
-const globalStatus = inject('globalStatus')
+import { useTemplateRef, computed } from 'vue'
+import defaultProfileImg from '@/assets/img/profile.png'
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia store import
 
 const props = defineProps({
   member: Object,
 })
 
-const profile = useTemplateRef('profile') // 화면 요소의 직접 참조
+const emit = defineEmits(['profile-update'])
 
-// props.member.profile이 있다면 활용. 없다면 기본 이미지 적용
+const profile = useTemplateRef('profile')
+const profileDialog = useTemplateRef('profileDialog')
+
+const globalStore = useGlobalStore() // ✅ Pinia 인스턴스 사용
+
+// 프로필 이미지 (있으면 base64, 없으면 기본 이미지)
 const profileImg = computed(() => {
   return props.member?.profile
     ? 'data:image/jpeg;base64,' + props.member.profile
     : defaultProfileImg
 })
 
-// 회원 정보를 수정할 수 있는지 반환
-const canModify = computed(
-  () =>
-    globalStatus.value.loginUser.email === props.member.email ||
-    globalStatus.value.loginUser.role === 'ADMIN' ||
-    true,
-)
+// 회원 정보를 수정할 수 있는지 판별 (자기 자신이거나 관리자)
+const canModify = computed(() => {
+  return (
+    globalStore.loginUser?.email === props.member?.email || globalStore.loginUser?.role === 'ADMIN'
+  )
+})
 
-const profileDialog = useTemplateRef('profileDialog') // 화면 요소의 직접 참조
 const showDialog = () => {
   profileDialog.value.showModal()
 }
+
 const close = () => {
   profileDialog.value.close()
 }
+
 const updateMember = () => {
   console.log('회원 수정 페이지로 이동')
 }
+
 const deleteMember = () => {
   if (confirm('정말 삭제하시겠습니까?')) {
     console.log('목록으로 이동')
   }
 }
-const emit = defineEmits(['profile-update'])
+
 const updateProfile = () => {
   emit('profile-update', profile.value)
   close()

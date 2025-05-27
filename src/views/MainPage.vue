@@ -78,41 +78,30 @@
       <div class="bg-indigo-100 rounded-lg shadow p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">찜한 매물</h2>
-          <a href="#" class="text-sm text-blue-500 hover:underline">more &gt;</a>
+          <router-link to="/myPage" class="text-sm text-blue-500 hover:underline"
+            >more &gt;</router-link
+          >
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+        <div
+          v-if="favoriteHouses.length > 0"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+        >
           <div
+            v-for="house in favoriteHouses"
+            :key="house.id"
             class="bg-gray-50 p-4 shadow-sm rounded-lg text-center cursor-pointer hover:bg-indigo-50 transition duration-150 ease-in-out"
           >
             <div
               class="h-20 mb-3 rounded bg-cover bg-center"
               :style="{ backgroundImage: `url(${apartmentUrl})` }"
             ></div>
-            <div class="font-semibold">아파트</div>
-            <div class="text-sm text-gray-500">서울 강남구</div>
-          </div>
-          <div
-            class="bg-gray-50 p-4 shadow-sm rounded-lg text-center cursor-pointer hover:bg-indigo-50 transition duration-150 ease-in-out"
-          >
-            <div
-              class="h-20 mb-3 rounded bg-cover bg-center"
-              :style="{ backgroundImage: `url(${apartmentUrl})` }"
-            ></div>
-            <div class="font-semibold">아파트</div>
-            <div class="text-sm text-gray-500">서울 강남구</div>
-          </div>
-          <div
-            class="bg-gray-50 p-4 shadow-sm rounded-lg text-center cursor-pointer hover:bg-indigo-50 transition duration-150 ease-in-out"
-          >
-            <div
-              class="h-20 mb-3 rounded bg-cover bg-center"
-              :style="{ backgroundImage: `url(${apartmentUrl})` }"
-            ></div>
-            <div class="font-semibold">아파트</div>
-            <div class="text-sm text-gray-500">서울 강남구</div>
+            <div class="text-sm font-semibold">{{ house.buildingName }}</div>
+            <div class="text-sm text-gray-500">{{ house.emdName }}</div>
           </div>
         </div>
+
+        <div v-else class="text-sm text-gray-500 text-center italic">찜한 매물이 없습니다.</div>
       </div>
     </section>
 
@@ -244,7 +233,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '@/stores/global' // ✅ Pinia store import
-
+import { getCookie } from '@/utils/cookie'
 import backgroundUrl from '@/assets/img/mainbackground.jpg'
 import propertyviewUrl from '@/assets/img/매물조회.png'
 import estatenewsUrl from '@/assets/img/부동산뉴스.png'
@@ -257,6 +246,7 @@ import axios from 'axios'
 const notices = ref([])
 const router = useRouter()
 const globalStore = useGlobalStore() // ✅ Pinia 상태 사용
+const favoriteHouses = ref([])
 
 const fetchNotices = async () => {
   try {
@@ -265,6 +255,37 @@ const fetchNotices = async () => {
     notices.value = res.data.result.content
   } catch (err) {
     console.error('공지사항 로딩 실패:', err)
+  }
+}
+
+const fetchFavoriteHouses = async () => {
+  try {
+    const token = getCookie('accessToken')
+    if (!token) {
+      console.warn('❗ 토큰이 없음: 요청 취소')
+      return
+    }
+
+    console.log('📡 관심매물 요청 시작: pageNo=1, pageSize=3')
+    const res = await axios.get('/v1/favorites/HOUSE', {
+      params: {
+        pageNo: 1,
+        pageSize: 3,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    console.log('✅ 관심매물 응답 수신:', res.data)
+
+    if (res?.data?.result?.content) {
+      favoriteHouses.value = res.data.result.content
+      console.log('📦 관심매물 저장 완료:', favoriteHouses.value)
+    } else {
+      console.warn('⚠️ 응답에 content가 없음 또는 비정상:', res.data)
+    }
+  } catch (err) {
+    console.error('❌ 관심매물 로딩 실패:', err)
   }
 }
 
@@ -277,7 +298,10 @@ const formatDate = (isoDate) => {
   return isoDate.slice(0, 10).replace(/-/g, '.')
 }
 
-onMounted(fetchNotices)
+onMounted(() => {
+  fetchNotices()
+  fetchFavoriteHouses()
+})
 </script>
 
 <style scoped></style>

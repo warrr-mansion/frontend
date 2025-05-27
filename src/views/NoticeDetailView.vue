@@ -18,20 +18,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia store import
+import { getCookie } from '@/utils/cookie'
 
 const route = useRoute()
 const router = useRouter()
-const globalStatus = inject('globalStatus')
+const globalStore = useGlobalStore() // ✅ Pinia store instance
+
 const notice = ref(null)
 const id = route.params.id
 
-// ✅ 관리자 여부 판별
-const isAdmin = computed(
-  () => globalStatus?.isLoggedIn && globalStatus?.loginUser?.role === 'ADMIN',
-)
+// ✅ 관리자 여부 판별 (Pinia 기반)
+const isAdmin = computed(() => globalStore.isLoggedIn && globalStore.loginUser?.role === 'ADMIN')
 
 const fetchNoticeDetail = async () => {
   try {
@@ -64,9 +65,20 @@ const goToEdit = () => {
 const deleteNotice = async () => {
   if (!confirm('정말로 삭제하시겠습니까?')) return
 
+  const token = getCookie('accessToken')
+  if (!token) {
+    alert('로그인이 필요합니다.')
+    return
+  }
+
   try {
-    await axios.delete(`/v1/notices/${id}`)
+    await axios.delete(`/v1/admin/notices/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
     alert('공지사항이 삭제되었습니다.')
+    console.log('🗑️ 삭제 요청 ID:', id)
     router.push({ name: 'notice' })
   } catch (err) {
     console.error('삭제 실패:', err)

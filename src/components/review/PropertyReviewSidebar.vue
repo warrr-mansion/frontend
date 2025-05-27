@@ -338,6 +338,29 @@ const loadNextPage = async () => {
   await fetchComments()
 }
 
+const fetchAiSummary = async () => {
+  const token = getCookie('accessToken')
+  if (!token) {
+    console.warn('❌ 요약 요청 실패: 로그인 필요')
+    return
+  }
+
+  try {
+    console.log('🧠 [AI 요약 요청]', props.propertyId)
+    const res = await axios.get(`/v1/houses/${props.propertyId}/comments/summary`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    console.log('✅ [AI 요약 응답 수신]', res.data)
+    aiSummary.value = res.data.result.summary || '요약 결과가 없습니다.'
+  } catch (err) {
+    console.error('❌ [AI 요약 실패]', err)
+    aiSummary.value = '요약 정보를 불러오지 못했습니다.'
+  }
+}
+
 watch(
   () => globalStore.loginUser,
   (user) => {
@@ -349,6 +372,7 @@ watch(
   },
   { immediate: true },
 )
+
 onMounted(async () => {
   if (!globalStore.loginUser) {
     try {
@@ -359,11 +383,13 @@ onMounted(async () => {
         headers: { Authorization: `Bearer ${token}` },
       })
 
-      globalStore.setUser(res.data.result) // ✅ 사용자 정보 전역 저장
+      globalStore.setUser(res.data.result)
       console.log('🎉 사용자 정보 불러옴:', res.data.result)
     } catch (err) {
       console.warn('❌ 사용자 정보 가져오기 실패:', err)
     }
   }
+
+  await fetchAiSummary() // ✅ 요약도 함께 가져오자
 })
 </script>

@@ -42,12 +42,13 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useGlobalStore } from '@/stores/global' // ✅ Pinia 스토어 import
 
-const globalStatus = inject('globalStatus')
 const router = useRouter()
+const globalStore = useGlobalStore() // ✅ Pinia 인스턴스 생성
 
 const member = ref({
   email: localStorage.getItem('email') || '',
@@ -72,7 +73,7 @@ const login = async () => {
       return
     }
 
-    // 2. 쿠키에 수동 저장 (httpOnly 아님)
+    // 2. 쿠키에 수동 저장
     document.cookie = `accessToken=${accessToken}; path=/;`
     document.cookie = `refreshToken=${refreshToken}; path=/;`
 
@@ -83,14 +84,19 @@ const login = async () => {
       localStorage.removeItem('email')
     }
 
-    // 4. 사용자 로그인 처리
-    globalStatus.value.loginUser = {
-      email: member.value.email,
+    // 4. Pinia 전역 상태에 사용자 정보 저장
+    globalStore.setUser({
       uuid: res.data.result.uuid,
-    }
-    globalStatus.value.isLoggedIn = true
+      email: member.value.email,
+      nickname: res.data.result.nickname, // 있으면 함께 저장
+      role: res.data.result.role, // 있으면 함께 저장
+      accessToken: accessToken, // 필요 시 사용
+    })
 
-    // 5. 메인 페이지로 이동
+    // 5. 로그인 여부 상태 설정
+    globalStore.isLoggedIn = true
+
+    // 6. 메인 페이지로 이동
     router.push('/')
   } catch (err) {
     console.error('로그인 실패', err)

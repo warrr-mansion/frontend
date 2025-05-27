@@ -78,7 +78,7 @@ const submitNotice = async () => {
       alert('공지사항이 등록되었습니다.')
     }
 
-    router.push({ name: 'notice' })
+    router.push({ name: 'notice', query: { refresh: 'true' } })
   } catch (err) {
     console.error('공지사항 등록/수정 실패:', err)
     alert('요청 처리에 실패했습니다.')

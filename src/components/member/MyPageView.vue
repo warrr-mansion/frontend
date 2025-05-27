@@ -84,7 +84,6 @@
                 <div class="font-semibold">
                   {{ region.sidoName }} {{ region.gugunName || '' }} {{ region.dongName || '' }}
                 </div>
-                <div class="text-sm text-gray-500">법정동 코드: {{ region.regionCode }}</div>
               </div>
               <button
                 @click="deleteRegion(region.regionCode)"
@@ -170,7 +169,6 @@ import {
   fetchFavoriteHouses,
   deleteFavoriteHouse,
   fetchFavoriteRegions,
-  addFavoriteRegionAPI,
   deleteFavoriteRegion,
 } from '@/api/favorite'
 import FavoriteRegionSelector from '@/components/region/FavoriteRegionSelector.vue'
