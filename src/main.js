@@ -43,7 +43,6 @@ async function initApp() {
   const refreshToken = getCookie('refreshToken')
 
   async function fetchUser() {
-    console.log('accessToken:', accessToken, typeof accessToken)
     if (!accessToken || accessToken === 'null' || accessToken === 'undefined') {
       console.log('❌ 자동 로그인 실패: accessToken 없음')
       return

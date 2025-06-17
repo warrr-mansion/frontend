@@ -129,6 +129,7 @@
             type="password"
             placeholder="비밀번호를 입력하세요"
             required
+            @input="validatePassword"
             style="
               width: 100%;
               padding: 10px 12px;
@@ -137,6 +138,15 @@
               font-size: 0.9rem;
             "
           />
+          <p v-if="passwordError" style="margin-top: 4px; font-size: 0.75rem; color: #ef4444">
+            {{ passwordError }}
+          </p>
+          <p
+            v-else-if="member.password && !passwordError"
+            style="margin-top: 4px; font-size: 0.75rem; color: #10b981"
+          >
+            🛡️ 비밀번호가 안전합니다
+          </p>
         </div>
 
         <button
@@ -176,17 +186,17 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const error = ref('') // error 관리
-const isDuplicated = ref('') // email 중복 관리
+const error = ref('')
+const isDuplicated = ref('')
 const emailError = ref(false)
+const passwordError = ref('')
 const router = useRouter()
 const member = ref({
   nickname: '',
   email: '',
   password: '',
-}) // Member 관리
+})
 
-// 이메일 입력 시 호출되는 함수
 const handleEmailInput = () => {
   isDuplicated.value = ''
 
@@ -195,11 +205,34 @@ const handleEmailInput = () => {
   emailError.value = email && !emailPattern.test(email)
 }
 
+const validatePassword = () => {
+  const password = member.value.password
+  const passwordRegex = /^(?=\S+$)(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+=-]).{8,20}$/
+
+  if (!password) {
+    passwordError.value = ''
+    return
+  }
+
+  if (!passwordRegex.test(password)) {
+    passwordError.value =
+      '비밀번호는 공백 없이 8~20자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.'
+    return
+  }
+
+  passwordError.value = ''
+}
+
 const registMember = async () => {
   error.value = ''
 
   if (isDuplicated.value !== 'false') {
     alert('이메일 중복 확인을 해주세요.')
+    return
+  }
+
+  if (passwordError.value) {
+    alert('비밀번호 형식을 확인해주세요.')
     return
   }
 
@@ -211,8 +244,9 @@ const registMember = async () => {
       },
     })
 
-    alert('회원가입 성공!')
-    router.push('/login')
+    if (res.status === 200) {
+      router.push('/signup/success')
+    }
   } catch (err) {
     console.error('회원가입 실패', err)
     error.value = err.response?.data?.message || '회원가입에 실패했습니다.'
