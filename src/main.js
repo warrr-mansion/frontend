@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './views/App.vue'
 import router from './router'
 import axios from 'axios'
+import api from '@/api/axiosInstance'
 import { getCookie, setCookie, deleteCookie } from '@/utils/cookie'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -83,9 +84,7 @@ async function initApp() {
 
     try {
       console.log('🔍 사용자 정보 조회 시작')
-      const res = await axios.get('/v1/members/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
+      const res = await api.get('/v1/members/me')
 
       const result = res.data.result
       globalStore.setUser({
@@ -104,14 +103,33 @@ async function initApp() {
         try {
           console.log('🔄 accessToken 만료, refreshToken으로 재발급 시도')
           const reissueRes = await axios.post('/v1/auth/reissue', { refreshToken })
-          const newAccessToken = reissueRes.data.result.accessToken
+
+          // 응답 헤더의 Authorization에서 토큰 가져오기
+          const newAccessToken = reissueRes.headers['authorization']
 
           if (newAccessToken) {
             setCookie('accessToken', newAccessToken)
-            console.log('♻️ accessToken 재발급 성공')
+            console.log('♻️ accessToken 재발급 성공:', newAccessToken)
 
-            // 재발급된 토큰으로 사용자 정보 다시 가져오기
-            await fetchUser()
+            // 재발급된 토큰으로 사용자 정보 다시 가져오기 (재귀 호출 방지)
+            try {
+              const userRes = await axios.get('/v1/members/me', {
+                headers: { Authorization: `Bearer ${newAccessToken}` },
+              })
+
+              const result = userRes.data.result
+              globalStore.setUser({
+                memberUuid: result.memberUuid,
+                nickname: result.nickname,
+                email: result.email,
+                role: result.role,
+                accessToken: newAccessToken,
+              })
+              console.log('✅ 재발급 후 자동 로그인 성공')
+            } catch (userErr) {
+              console.error('❌ 재발급 후 사용자 정보 조회 실패:', userErr.response?.status)
+              logout()
+            }
           } else {
             throw new Error('재발급된 토큰이 없습니다.')
           }
