@@ -8,8 +8,106 @@
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      position: 'relative',
     }"
   >
+    <!-- 비회원 오버레이 -->
+    <div
+      v-if="!globalStore.isLoggedIn"
+      :style="{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '40px 20px',
+        borderRadius: '8px',
+      }"
+    >
+      <div
+        :style="{
+          textAlign: 'center',
+          maxWidth: '280px',
+        }"
+      >
+        <div
+          :style="{
+            fontSize: '48px',
+            marginBottom: '16px',
+          }"
+        >
+          🔒
+        </div>
+        <h3
+          :style="{
+            fontSize: '18px',
+            fontWeight: '700',
+            color: '#1f2937',
+            marginBottom: '12px',
+          }"
+        >
+          로그인이 필요합니다
+        </h3>
+        <p
+          :style="{
+            fontSize: '14px',
+            color: '#6b7280',
+            lineHeight: '1.6',
+            marginBottom: '24px',
+          }"
+        >
+          회원가입 후 다양한 서비스를 이용해보세요
+        </p>
+        <div
+          :style="{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+          }"
+        >
+          <button
+            @click="goToLogin"
+            :style="{
+              backgroundColor: '#6366f1',
+              color: 'white',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease',
+            }"
+          >
+            로그인
+          </button>
+          <button
+            @click="goToSignUp"
+            :style="{
+              backgroundColor: 'white',
+              color: '#6366f1',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: '2px solid #6366f1',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }"
+          >
+            회원가입
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- AI 요약 -->
     <div
       :style="{
@@ -49,7 +147,11 @@
           border: '1px solid #e2e8f0',
         }"
       >
-        <div v-if="aiSummary && aiSummary !== '리뷰 요약을 불러오는 중입니다...'">
+        <div
+          v-if="
+            globalStore.isLoggedIn && aiSummary && aiSummary !== '리뷰 요약을 불러오는 중입니다...'
+          "
+        >
           <div
             v-for="(line, index) in aiSummary.split('\n')"
             :key="index"
@@ -111,6 +213,69 @@
             }"
           >
             {{ line }}
+          </div>
+        </div>
+        <div v-else-if="!globalStore.isLoggedIn">
+          <!-- 비회원용 가짜 AI 요약 -->
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#fef3c7',
+              borderRadius: '4px',
+              border: '1px solid #fbbf24',
+              fontWeight: '600',
+            }"
+          >
+            😊 전체적인 감정: 긍정적인 감정이 주를 이루고 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#dbeafe',
+              borderRadius: '4px',
+              border: '1px solid #3b82f6',
+              fontWeight: '600',
+            }"
+          >
+            📌 주요 주제: 집의 편리함과 주차 문제
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#dcfce7',
+              borderRadius: '4px',
+              border: '1px solid #10b981',
+              fontWeight: '600',
+            }"
+          >
+            👍 긍정적인 점: 집이 마음에 들고, 근처에 마트가 많아 편리함을 느끼고 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#fee2e2',
+              borderRadius: '4px',
+              border: '1px solid #ef4444',
+              fontWeight: '600',
+            }"
+          >
+            👎 부정적인 점: 주차가 조금 불편하다는 점이 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '2px',
+              padding: '6px 8px',
+              backgroundColor: '#f3e8ff',
+              borderRadius: '4px',
+              border: '1px solid #8b5cf6',
+              fontWeight: '600',
+            }"
+          >
+            🏷️ 핵심 키워드: 집, 편리함, 마트, 주차 문제
           </div>
         </div>
         <div
@@ -181,7 +346,7 @@
             padding: '8px 16px',
             borderRadius: '8px',
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: '600',
             cursor: 'pointer',
             border: 'none',
             transition: 'all 0.2s ease',
@@ -226,7 +391,7 @@
           padding: '10px',
           borderRadius: '6px',
           fontSize: '13px',
-          fontWeight: 600,
+          fontWeight: '600',
           border: 'none',
           cursor: 'pointer',
           transition: 'background-color 0.2s ease',
@@ -243,11 +408,15 @@ import { ref, watch, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useGlobalStore } from '@/stores/global'
 import { getCookie } from '@/utils/cookie'
+import { useRouter } from 'vue-router'
+
 const globalStore = useGlobalStore()
 const myUuid = computed(() => globalStore.loginUser?.uuid)
 const isMyComment = (comment) => {
   return comment.memberUuid === myUuid.value
 }
+
+const router = useRouter()
 
 const props = defineProps({
   propertyId: {
@@ -446,6 +615,11 @@ const loadNextPage = async () => {
 }
 
 const fetchAiSummary = async () => {
+  // 비회원이면 API 호출하지 않음
+  if (!globalStore.isLoggedIn) {
+    return
+  }
+
   const token = getCookie('accessToken')
   if (!token) {
     console.warn('❌ 요약 요청 실패: 로그인 필요')
@@ -472,6 +646,15 @@ const fetchAiSummary = async () => {
     console.error('❌ AI 요약 에러:', err.response?.data || err.message)
     aiSummary.value = '요약을 가져오는 중 오류가 발생했습니다.'
   }
+}
+
+// 로그인/회원가입 페이지 이동 함수
+const goToLogin = () => {
+  router.push('/login')
+}
+
+const goToSignUp = () => {
+  router.push('/signup')
 }
 
 watch(
