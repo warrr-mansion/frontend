@@ -290,6 +290,14 @@ const fetchComments = async () => {
     if (pageNo.value === 1) {
       comments.value = result.content
       console.log('📄 [1페이지 댓글 갱신]', comments.value)
+
+      // 첫 페이지 로드 시 댓글 수에 따라 AI 요약 처리
+      if (result.pageSize === 0) {
+        aiSummary.value =
+          '죄송하지만 현재로서는 정확한 요약을 제공하기에 충분한 정보가 없습니다. 더 많은 피드백이 수집되면, 기꺼이 요약해 드리겠습니다.'
+      } else {
+        fetchAiSummary()
+      }
     } else {
       comments.value = [...comments.value, ...result.content]
       console.log('📄 [추가 댓글 누적]', result.content)
@@ -353,11 +361,17 @@ const fetchAiSummary = async () => {
       },
     })
 
-    console.log('✅ [AI 요약 응답 수신]', res.data)
-    aiSummary.value = res.data.result.summary || '요약 결과가 없습니다.'
+    console.log('✅ AI 요약 응답:', res.data)
+
+    if (res.data?.result) {
+      aiSummary.value = res.data.result.summary || res.data.result
+      console.log('✅ AI 요약 설정:', aiSummary.value)
+    } else {
+      console.warn('⚠️ AI 요약 응답 형식 이상:', res.data)
+    }
   } catch (err) {
-    console.error('❌ [AI 요약 실패]', err)
-    aiSummary.value = '요약 정보를 불러오지 못했습니다.'
+    console.error('❌ AI 요약 에러:', err.response?.data || err.message)
+    aiSummary.value = '요약을 가져오는 중 오류가 발생했습니다.'
   }
 }
 
@@ -389,7 +403,5 @@ onMounted(async () => {
       console.warn('❌ 사용자 정보 가져오기 실패:', err)
     }
   }
-
-  await fetchAiSummary() // ✅ 요약도 함께 가져오자
 })
 </script>
