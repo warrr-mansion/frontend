@@ -98,6 +98,12 @@ api.interceptors.response.use(
 
 // ✅ accessToken 전역 반영 + 쿠키 저장
 export function updateAccessToken(token) {
+  // null, 'null', undefined 체크
+  if (!token || token === 'null' || token === 'undefined') {
+    console.log('⚠️ 유효하지 않은 토큰 - updateAccessToken 무시')
+    return
+  }
+
   currentAccessToken = token
   setCookie('accessToken', token)
   console.log('🧪 updateAccessToken() 호출 →', token)

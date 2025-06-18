@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './views/App.vue'
 import router from './router'
 import axios from 'axios'
+import api from '@/api/axiosInstance'
 import { getCookie, setCookie, deleteCookie } from '@/utils/cookie'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -69,6 +70,12 @@ async function initApp() {
   const accessToken = getCookie('accessToken')
   const refreshToken = getCookie('refreshToken')
 
+  // 유효하지 않은 토큰 삭제
+  if (!accessToken || accessToken === 'null' || accessToken === 'undefined') {
+    console.log('❌ 유효하지 않은 accessToken 삭제')
+    deleteCookie('accessToken')
+  }
+
   async function fetchUser() {
     if (!accessToken || accessToken === 'null' || accessToken === 'undefined') {
       console.log('❌ 자동 로그인 실패: accessToken 없음')
@@ -76,9 +83,8 @@ async function initApp() {
     }
 
     try {
-      const res = await axios.get('/v1/members/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
+      console.log('🔍 사용자 정보 조회 시작')
+      const res = await api.get('/v1/members/me')
 
       const result = res.data.result
       globalStore.setUser({
@@ -86,33 +92,71 @@ async function initApp() {
         nickname: result.nickname,
         email: result.email,
         role: result.role,
-        accessToken: getCookie('accessToken'),
+        accessToken: accessToken,
       })
       console.log('✅ 자동 로그인 성공')
     } catch (err) {
       console.warn('❌ accessToken 오류:', err.response?.status)
+
+      // 401 에러이고 refreshToken이 있는 경우 재발급 시도
       if (err.response?.status === 401 && refreshToken) {
         try {
+          console.log('🔄 accessToken 만료, refreshToken으로 재발급 시도')
           const reissueRes = await axios.post('/v1/auth/reissue', { refreshToken })
-          const newAccessToken = reissueRes.data.result.accessToken
-          setCookie('accessToken', newAccessToken)
-          console.log('♻️ accessToken 재발급 성공')
-          await fetchUser()
+
+          // 응답 헤더의 Authorization에서 토큰 가져오기
+          const newAccessToken = reissueRes.headers['authorization']
+
+          if (newAccessToken) {
+            setCookie('accessToken', newAccessToken)
+            console.log('♻️ accessToken 재발급 성공:', newAccessToken)
+
+            // 재발급된 토큰으로 사용자 정보 다시 가져오기 (재귀 호출 방지)
+            try {
+              const userRes = await axios.get('/v1/members/me', {
+                headers: { Authorization: `Bearer ${newAccessToken}` },
+              })
+
+              const result = userRes.data.result
+              globalStore.setUser({
+                memberUuid: result.memberUuid,
+                nickname: result.nickname,
+                email: result.email,
+                role: result.role,
+                accessToken: newAccessToken,
+              })
+              console.log('✅ 재발급 후 자동 로그인 성공')
+            } catch (userErr) {
+              console.error('❌ 재발급 후 사용자 정보 조회 실패:', userErr.response?.status)
+              logout()
+            }
+          } else {
+            throw new Error('재발급된 토큰이 없습니다.')
+          }
         } catch (e) {
-          console.error('🚫 재발급 실패:', e)
+          console.error('🚫 refreshToken 재발급 실패:', e.response?.data || e.message)
+          console.log('🧹 토큰 삭제 및 로그아웃 처리')
           logout()
         }
       } else {
+        console.log('🧹 accessToken 오류로 인한 로그아웃 처리')
         logout()
       }
     }
   }
 
   function logout() {
+    console.log('🚪 로그아웃 처리 시작')
     globalStore.logout()
+
+    // 모든 토큰 삭제
     deleteCookie('accessToken')
     deleteCookie('refreshToken')
+
+    // localStorage도 정리
     localStorage.clear()
+
+    console.log('✅ 로그아웃 완료 - 모든 토큰 삭제됨')
   }
 
   if (accessToken) {

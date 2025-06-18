@@ -15,10 +15,12 @@ export const useGlobalStore = defineStore('global', {
         role: user.role,
         accessToken: user.accessToken,
       }
+      console.log('🔐 사용자 정보 업데이트:', this.loginUser)
     },
     logout() {
       this.isLoggedIn = false
       this.loginUser = null
+      console.log('🚪 로그아웃 완료')
     },
   },
 })

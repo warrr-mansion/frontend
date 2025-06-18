@@ -8,24 +8,288 @@
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      position: 'relative',
     }"
   >
+    <!-- 비회원 오버레이 -->
+    <div
+      v-if="!globalStore.isLoggedIn"
+      :style="{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '40px 20px',
+        borderRadius: '8px',
+      }"
+    >
+      <div
+        :style="{
+          textAlign: 'center',
+          maxWidth: '280px',
+        }"
+      >
+        <div
+          :style="{
+            fontSize: '48px',
+            marginBottom: '16px',
+          }"
+        >
+          🔒
+        </div>
+        <h3
+          :style="{
+            fontSize: '18px',
+            fontWeight: '700',
+            color: '#1f2937',
+            marginBottom: '12px',
+          }"
+        >
+          로그인이 필요합니다
+        </h3>
+        <p
+          :style="{
+            fontSize: '14px',
+            color: '#6b7280',
+            lineHeight: '1.6',
+            marginBottom: '24px',
+          }"
+        >
+          회원가입 후 다양한 서비스를 이용해보세요
+        </p>
+        <div
+          :style="{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+          }"
+        >
+          <button
+            @click="goToLogin"
+            :style="{
+              backgroundColor: '#6366f1',
+              color: 'white',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease',
+            }"
+          >
+            로그인
+          </button>
+          <button
+            @click="goToSignUp"
+            :style="{
+              backgroundColor: 'white',
+              color: '#6366f1',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: '2px solid #6366f1',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }"
+          >
+            회원가입
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- AI 요약 -->
     <div
       :style="{
-        marginBottom: '20px',
+        marginBottom: '16px',
         backgroundColor: '#ffffff',
         padding: '16px',
-        borderRadius: '8px',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        borderRadius: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+        border: '1px solid #e5e7eb',
+        maxHeight: '300px',
+        overflowY: 'auto',
       }"
     >
-      <h3 :style="{ fontSize: '14px', fontWeight: 600, color: '#1f2937', marginBottom: '8px' }">
+      <h3
+        :style="{
+          fontSize: '14px',
+          fontWeight: '700',
+          color: '#1f2937',
+          marginBottom: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }"
+      >
+        <span style="fontsize: '16px'">🤖</span>
         AI 리뷰 요약
       </h3>
-      <p :style="{ fontSize: '13px', color: '#4b5563', lineHeight: '1.6' }">
-        {{ aiSummary || '리뷰 요약을 불러오는 중입니다...' }}
-      </p>
+      <div
+        :style="{
+          fontSize: '12px',
+          color: '#4b5563',
+          lineHeight: '1.6',
+          whiteSpace: 'pre-line',
+          backgroundColor: '#f8fafc',
+          padding: '12px',
+          borderRadius: '6px',
+          border: '1px solid #e2e8f0',
+        }"
+      >
+        <div
+          v-if="
+            globalStore.isLoggedIn && aiSummary && aiSummary !== '리뷰 요약을 불러오는 중입니다...'
+          "
+        >
+          <div
+            v-for="(line, index) in aiSummary.split('\n')"
+            :key="index"
+            :style="{
+              marginBottom:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '8px'
+                  : '2px',
+              padding:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '6px 8px'
+                  : '0',
+              backgroundColor: line.includes('😊')
+                ? '#fef3c7'
+                : line.includes('📌')
+                  ? '#dbeafe'
+                  : line.includes('👍')
+                    ? '#dcfce7'
+                    : line.includes('👎')
+                      ? '#fee2e2'
+                      : line.includes('🏷️')
+                        ? '#f3e8ff'
+                        : 'transparent',
+              borderRadius:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '4px'
+                  : '0',
+              border: line.includes('😊')
+                ? '1px solid #fbbf24'
+                : line.includes('📌')
+                  ? '1px solid #3b82f6'
+                  : line.includes('👍')
+                    ? '1px solid #10b981'
+                    : line.includes('👎')
+                      ? '1px solid #ef4444'
+                      : line.includes('🏷️')
+                        ? '1px solid #8b5cf6'
+                        : 'none',
+              fontWeight:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '600'
+                  : '400',
+            }"
+          >
+            {{ line }}
+          </div>
+        </div>
+        <div v-else-if="!globalStore.isLoggedIn">
+          <!-- 비회원용 가짜 AI 요약 -->
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#fef3c7',
+              borderRadius: '4px',
+              border: '1px solid #fbbf24',
+              fontWeight: '600',
+            }"
+          >
+            😊 전체적인 감정: 긍정적인 감정이 주를 이루고 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#dbeafe',
+              borderRadius: '4px',
+              border: '1px solid #3b82f6',
+              fontWeight: '600',
+            }"
+          >
+            📌 주요 주제: 집의 편리함과 주차 문제
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#dcfce7',
+              borderRadius: '4px',
+              border: '1px solid #10b981',
+              fontWeight: '600',
+            }"
+          >
+            👍 긍정적인 점: 집이 마음에 들고, 근처에 마트가 많아 편리함을 느끼고 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '8px',
+              padding: '6px 8px',
+              backgroundColor: '#fee2e2',
+              borderRadius: '4px',
+              border: '1px solid #ef4444',
+              fontWeight: '600',
+            }"
+          >
+            👎 부정적인 점: 주차가 조금 불편하다는 점이 있습니다.
+          </div>
+          <div
+            :style="{
+              marginBottom: '2px',
+              padding: '6px 8px',
+              backgroundColor: '#f3e8ff',
+              borderRadius: '4px',
+              border: '1px solid #8b5cf6',
+              fontWeight: '600',
+            }"
+          >
+            🏷️ 핵심 키워드: 집, 편리함, 마트, 주차 문제
+          </div>
+        </div>
+        <div
+          v-else
+          :style="{
+            textAlign: 'center',
+            color: '#6b7280',
+            fontStyle: 'italic',
+            padding: '16px',
+          }"
+        >
+          {{ aiSummary || '리뷰 요약을 불러오는 중입니다...' }}
+        </div>
+      </div>
     </div>
 
     <!-- 댓글 목록 -->
@@ -82,7 +346,7 @@
             padding: '8px 16px',
             borderRadius: '8px',
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: '600',
             cursor: 'pointer',
             border: 'none',
             transition: 'all 0.2s ease',
@@ -127,7 +391,7 @@
           padding: '10px',
           borderRadius: '6px',
           fontSize: '13px',
-          fontWeight: 600,
+          fontWeight: '600',
           border: 'none',
           cursor: 'pointer',
           transition: 'background-color 0.2s ease',
@@ -144,11 +408,15 @@ import { ref, watch, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useGlobalStore } from '@/stores/global'
 import { getCookie } from '@/utils/cookie'
+import { useRouter } from 'vue-router'
+
 const globalStore = useGlobalStore()
 const myUuid = computed(() => globalStore.loginUser?.uuid)
 const isMyComment = (comment) => {
   return comment.memberUuid === myUuid.value
 }
+
+const router = useRouter()
 
 const props = defineProps({
   propertyId: {
@@ -290,6 +558,14 @@ const fetchComments = async () => {
     if (pageNo.value === 1) {
       comments.value = result.content
       console.log('📄 [1페이지 댓글 갱신]', comments.value)
+
+      // 첫 페이지 로드 시 댓글 수에 따라 AI 요약 처리
+      if (result.pageSize === 0) {
+        aiSummary.value =
+          '죄송하지만 현재로서는 정확한 요약을 제공하기에 충분한 정보가 없습니다. 더 많은 피드백이 수집되면, 기꺼이 요약해 드리겠습니다.'
+      } else {
+        fetchAiSummary()
+      }
     } else {
       comments.value = [...comments.value, ...result.content]
       console.log('📄 [추가 댓글 누적]', result.content)
@@ -339,6 +615,11 @@ const loadNextPage = async () => {
 }
 
 const fetchAiSummary = async () => {
+  // 비회원이면 API 호출하지 않음
+  if (!globalStore.isLoggedIn) {
+    return
+  }
+
   const token = getCookie('accessToken')
   if (!token) {
     console.warn('❌ 요약 요청 실패: 로그인 필요')
@@ -353,12 +634,27 @@ const fetchAiSummary = async () => {
       },
     })
 
-    console.log('✅ [AI 요약 응답 수신]', res.data)
-    aiSummary.value = res.data.result.summary || '요약 결과가 없습니다.'
+    console.log('✅ AI 요약 응답:', res.data)
+
+    if (res.data?.result) {
+      aiSummary.value = res.data.result.summary || res.data.result
+      console.log('✅ AI 요약 설정:', aiSummary.value)
+    } else {
+      console.warn('⚠️ AI 요약 응답 형식 이상:', res.data)
+    }
   } catch (err) {
-    console.error('❌ [AI 요약 실패]', err)
-    aiSummary.value = '요약 정보를 불러오지 못했습니다.'
+    console.error('❌ AI 요약 에러:', err.response?.data || err.message)
+    aiSummary.value = '요약을 가져오는 중 오류가 발생했습니다.'
   }
+}
+
+// 로그인/회원가입 페이지 이동 함수
+const goToLogin = () => {
+  router.push('/login')
+}
+
+const goToSignUp = () => {
+  router.push('/signup')
 }
 
 watch(
@@ -389,7 +685,5 @@ onMounted(async () => {
       console.warn('❌ 사용자 정보 가져오기 실패:', err)
     }
   }
-
-  await fetchAiSummary() // ✅ 요약도 함께 가져오자
 })
 </script>
