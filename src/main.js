@@ -24,25 +24,57 @@ async function initApp() {
 
   const globalStore = useGlobalStore()
 
-  // Kakao Map SDK
-  function loadKakaoMapSDK() {
+  // ✅ Kakao Map SDK 로딩 함수
+  async function loadKakaoMapSDK() {
     return new Promise((resolve, reject) => {
-      if (window.kakao?.maps) return resolve(window.kakao)
+      if (typeof window === 'undefined') {
+        console.error('❌ Kakao SDK는 브라우저 환경에서만 동작합니다.')
+        return reject(new Error('Not in browser'))
+      }
+
+      const jsKey = import.meta.env.VITE_KAKAO_JS_KEY
+      if (!jsKey) {
+        console.error('❌ Kakao JS 키가 정의되지 않았습니다.')
+        return reject(new Error('Missing Kakao JS Key'))
+      }
+
+      if (window.kakao?.maps && typeof window.kakao.maps.load === 'function') {
+        return resolve(window.kakao)
+      }
 
       const script = document.createElement('script')
-      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_JS_KEY}&autoload=false`
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${jsKey}&autoload=false`
       script.async = true
-      script.onload = () => window.kakao.maps.load(() => resolve(window.kakao))
-      script.onerror = reject
+
+      script.onload = () => {
+        if (window.kakao?.maps?.load) {
+          window.kakao.maps.load(() => resolve(window.kakao))
+        } else {
+          reject(new Error('Kakao SDK 로딩 실패'))
+        }
+      }
+
+      script.onerror = (e) => {
+        console.error('❌ Kakao Map SDK 로드 실패:', e)
+        reject(e)
+      }
+
       document.head.appendChild(script)
     })
   }
+
+  // 전역으로 등록
   app.config.globalProperties.$loadKakaoMapSDK = loadKakaoMapSDK
 
   const accessToken = getCookie('accessToken')
   const refreshToken = getCookie('refreshToken')
 
   async function fetchUser() {
+    if (!accessToken || accessToken === 'null' || accessToken === 'undefined') {
+      console.log('❌ 자동 로그인 실패: accessToken 없음')
+      return
+    }
+
     try {
       const res = await axios.get('/v1/members/me', {
         headers: { Authorization: `Bearer ${accessToken}` },
