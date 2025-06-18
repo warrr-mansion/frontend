@@ -13,19 +13,118 @@
     <!-- AI 요약 -->
     <div
       :style="{
-        marginBottom: '20px',
+        marginBottom: '16px',
         backgroundColor: '#ffffff',
         padding: '16px',
-        borderRadius: '8px',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        borderRadius: '12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+        border: '1px solid #e5e7eb',
+        maxHeight: '300px',
+        overflowY: 'auto',
       }"
     >
-      <h3 :style="{ fontSize: '14px', fontWeight: 600, color: '#1f2937', marginBottom: '8px' }">
+      <h3
+        :style="{
+          fontSize: '14px',
+          fontWeight: '700',
+          color: '#1f2937',
+          marginBottom: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }"
+      >
+        <span style="fontsize: '16px'">🤖</span>
         AI 리뷰 요약
       </h3>
-      <p :style="{ fontSize: '13px', color: '#4b5563', lineHeight: '1.6' }">
-        {{ aiSummary || '리뷰 요약을 불러오는 중입니다...' }}
-      </p>
+      <div
+        :style="{
+          fontSize: '12px',
+          color: '#4b5563',
+          lineHeight: '1.6',
+          whiteSpace: 'pre-line',
+          backgroundColor: '#f8fafc',
+          padding: '12px',
+          borderRadius: '6px',
+          border: '1px solid #e2e8f0',
+        }"
+      >
+        <div v-if="aiSummary && aiSummary !== '리뷰 요약을 불러오는 중입니다...'">
+          <div
+            v-for="(line, index) in aiSummary.split('\n')"
+            :key="index"
+            :style="{
+              marginBottom:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '8px'
+                  : '2px',
+              padding:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '6px 8px'
+                  : '0',
+              backgroundColor: line.includes('😊')
+                ? '#fef3c7'
+                : line.includes('📌')
+                  ? '#dbeafe'
+                  : line.includes('👍')
+                    ? '#dcfce7'
+                    : line.includes('👎')
+                      ? '#fee2e2'
+                      : line.includes('🏷️')
+                        ? '#f3e8ff'
+                        : 'transparent',
+              borderRadius:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '4px'
+                  : '0',
+              border: line.includes('😊')
+                ? '1px solid #fbbf24'
+                : line.includes('📌')
+                  ? '1px solid #3b82f6'
+                  : line.includes('👍')
+                    ? '1px solid #10b981'
+                    : line.includes('👎')
+                      ? '1px solid #ef4444'
+                      : line.includes('🏷️')
+                        ? '1px solid #8b5cf6'
+                        : 'none',
+              fontWeight:
+                line.includes('😊') ||
+                line.includes('📌') ||
+                line.includes('👍') ||
+                line.includes('👎') ||
+                line.includes('🏷️')
+                  ? '600'
+                  : '400',
+            }"
+          >
+            {{ line }}
+          </div>
+        </div>
+        <div
+          v-else
+          :style="{
+            textAlign: 'center',
+            color: '#6b7280',
+            fontStyle: 'italic',
+            padding: '16px',
+          }"
+        >
+          {{ aiSummary || '리뷰 요약을 불러오는 중입니다...' }}
+        </div>
+      </div>
     </div>
 
     <!-- 댓글 목록 -->

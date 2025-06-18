@@ -25,13 +25,15 @@
             v-if="msg.role === 'user'"
             class="text-right text-sm text-black bg-gray-200 p-2 rounded-md inline-block max-w-[80%] ml-auto"
           >
-            {{ msg.content }}
+            <span style="white-space: pre-line; word-break: break-word">{{ msg.content }}</span>
           </div>
           <div
             v-else
             class="text-left text-sm text-white bg-purple-500 p-2 rounded-md inline-block max-w-[80%]"
           >
-            {{ msg.content }}
+            <div style="white-space: pre-line; word-break: break-word; line-height: 1.7">
+              {{ msg.content }}
+            </div>
           </div>
         </div>
 
@@ -68,7 +70,13 @@ import axios from 'axios'
 
 const show = ref(false)
 const input = ref('')
-const messages = ref([{ role: 'assistant', content: '안녕하세요! 부동산 관련 질문을 해보세요 😊' }])
+const messages = ref([
+  {
+    role: 'assistant',
+    content:
+      '안녕하세요! 😊\n\n부동산에 대해 궁금한 점이 있으신가요? 아파트, 집 구매, 임대 등 어떤 질문이든 환영합니다! 🏡',
+  },
+])
 const loading = ref(false)
 
 // UUID 저장용 ref
