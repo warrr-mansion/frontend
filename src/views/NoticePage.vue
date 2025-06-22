@@ -3,11 +3,11 @@
     <div class="notice-box">
       <div class="notice-header">
         <h1 class="notice-title">📢 공지사항</h1>
-        <!-- ✅ 관리자에게만 글쓰기 버튼 노출 -->
         <button v-if="isAdmin" @click="goToWrite" class="write-btn">글쓰기</button>
       </div>
 
-      <div class="notice-scroll-container">
+      <!-- ✅ 스크롤 감지 대상 -->
+      <div class="notice-scroll-container" ref="scrollContainer">
         <ul class="notice-list">
           <li
             v-for="notice in notices"
@@ -23,33 +23,36 @@
         </ul>
 
         <div v-if="notices.length === 0" class="notice-empty">등록된 공지사항이 없습니다.</div>
-      </div>
-      <div v-if="hasNext" class="text-center mt-4">
-        <div v-if="hasNext" class="text-center mt-4">
-          <button class="btn btn-outline-primary" @click="loadNextPage">더 보기</button>
-        </div>
+
+        <div v-if="isLoading" class="loading-text text-center">로딩 중...</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { useGlobalStore } from '@/stores/global' // ✅ Pinia 스토어 import
+import { useGlobalStore } from '@/stores/global'
 
 const globalStore = useGlobalStore()
 const router = useRouter()
+
 const notices = ref([])
 const pageNo = ref(1)
 const pageSize = 10
 const hasNext = ref(false)
+const isLoading = ref(false)
 
-// ✅ 관리자 여부 계산
+const scrollContainer = ref(null)
+
 const isAdmin = computed(() => globalStore.isLoggedIn && globalStore.loginUser?.role === 'ADMIN')
 
 const fetchNotices = async (reset = false) => {
+  if (isLoading.value || (!reset && !hasNext.value)) return
+  isLoading.value = true
+
   try {
     if (reset) {
       pageNo.value = 1
@@ -59,7 +62,7 @@ const fetchNotices = async (reset = false) => {
     const res = await axios.get('/v1/notices', {
       params: {
         pageNo: pageNo.value,
-        pageSize: pageSize,
+        pageSize,
       },
     })
 
@@ -79,8 +82,11 @@ const fetchNotices = async (reset = false) => {
 
     notices.value.push(...mapped)
     hasNext.value = result.hasNext
+    pageNo.value++
   } catch (err) {
     console.error('공지사항 불러오기 실패:', err)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -92,13 +98,31 @@ const goToWrite = () => {
   router.push({ name: 'NoticeWrite' })
 }
 
-const loadNextPage = async () => {
-  pageNo.value++
-  await fetchNotices()
+const handleScroll = () => {
+  const el = scrollContainer.value
+  if (!el) return
+
+  const { scrollTop, scrollHeight, clientHeight } = el
+
+  console.log('[Scroll] top:', scrollTop, 'height:', scrollHeight, 'client:', clientHeight)
+
+  if (scrollTop + clientHeight >= scrollHeight - 50) {
+    console.log('[Scroll] 하단 감지됨, 다음 페이지 로딩 시도')
+    fetchNotices()
+  }
 }
 
 onMounted(() => {
-  fetchNotices(true) // reset=true
+  fetchNotices(true)
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('scroll', handleScroll)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll)
+  }
 })
 </script>
 
