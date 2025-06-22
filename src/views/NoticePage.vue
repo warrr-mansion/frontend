@@ -104,10 +104,10 @@ const handleScroll = () => {
 
   const { scrollTop, scrollHeight, clientHeight } = el
 
-  console.log('[Scroll] top:', scrollTop, 'height:', scrollHeight, 'client:', clientHeight)
+  // console.log('[Scroll] top:', scrollTop, 'height:', scrollHeight, 'client:', clientHeight)
 
   if (scrollTop + clientHeight >= scrollHeight - 50) {
-    console.log('[Scroll] 하단 감지됨, 다음 페이지 로딩 시도')
+    //  console.log('[Scroll] 하단 감지됨, 다음 페이지 로딩 시도')
     fetchNotices()
   }
 }
